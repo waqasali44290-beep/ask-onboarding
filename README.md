@@ -220,6 +220,8 @@ _TODO: add images to `docs/screenshots/` (upload page, chat with citations, no-a
 - No authentication: the ticket "user" is a name typed into the UI.
 - Ingestion runs as a FastAPI background task, not a durable job queue, so a crash during ingestion leaves the document marked `failed`.
 - Scanned PDFs (images only) are not OCR'd.
+- The local LLM runs on CPU: expect about 10–20 seconds per answer, and about 40 seconds for the first question after start-up while the model loads into memory.
+- Each question is answered on its own: earlier messages are shown in the history but not sent to the LLM, so follow-ups like "what about for managers?" need to repeat the topic.
 - _TODO: add more as they come up._
 
 ---

@@ -39,7 +39,7 @@ The path of one question, step by step: _TODO_ (browser → nginx → `/api/chat
 | Vector store | pgvector | One database; transactional replace-on-reupload |
 | top-k | 5 | _TODO_ |
 | No-answer detection | similarity cutoff 0.50 + prompt rule | Two layers, because a cutoff alone can't do it (see below) |
-| LLM | qwen2.5:3b via Ollama | Free and local (training project, no API budget). 3B is the largest that answers at a usable speed on a CPU-only laptop with 8 GB for Docker. _TODO: speed + quality numbers_ |
+| LLM | qwen2.5:3b via Ollama | Free and local (training project, no API budget). 3B is the largest that answers at a usable speed on a CPU-only laptop with 8 GB for Docker. See the first live test below. |
 
 **Choosing the no-answer cutoff.** I scored 16 questions against 6 short policy documents (bge-small, best-chunk cosine similarity):
 
@@ -50,6 +50,17 @@ The path of one question, step by step: _TODO_ (browser → nginx → `/api/chat
 | Sounds like company policy, not covered | 0.49 – 0.62 | "Parental leave policy?" 0.62, "Wifi password?" 0.59, "Dress code?" 0.49 |
 
 The third group overlaps the first ("parental leave" 0.62 vs "carry over unused leave" 0.65), so no single cutoff separates them. The cutoff (0.50) therefore only removes clearly off-topic questions, which get an instant "not in the documents" without an LLM call. Near-misses reach the LLM, and the prompt makes it say when the sources don't cover the question. I chose 0.50 rather than 0.55 because real chunks are longer than these test passages, and longer chunks score lower. _TODO: re-check on the 20-question eval set._
+
+**First live test of the LLM** (qwen2.5:3b, CPU only, i7-1355U, 6 short documents):
+
+| Question | Result | Time |
+|---|---|---|
+| What should I do if my laptop is stolen? | Correct and complete; cited only the right source | 49 s (includes loading the model) |
+| Can I use Jira from home, and how many vacation days do I get? | Combined two documents; cited both correctly | 13 s to first token, 21 s total |
+| What is the company's parental leave policy? | Model replied NOT_FOUND from 4 related sources → no-answer + ticket offer | 9 s |
+| What is the capital of France? | Below the cutoff → no-answer without an LLM call | 0.1 s |
+
+Most of the wait is the CPU reading the prompt (5 sources × up to 800 characters) before the first token. Lowering TOP_K or using a GPU would cut it; with a hosted LLM API it would be about 1 s.
 
 What didn't work: the original default cutoff of 0.35 let every question through, because bge-small scores even unrelated text around 0.35–0.6.
 

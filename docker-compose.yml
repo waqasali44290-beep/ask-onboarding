@@ -17,7 +17,7 @@ services:
 
   # Local LLM server. Models are stored in a volume so they download only once.
   ollama:
-    image: ollama/ollama:latest
+    image: ollama/ollama:0.40.16
     environment:
       OLLAMA_KEEP_ALIVE: 24h        # keep the model loaded; reloading takes seconds on CPU
     volumes:
@@ -31,7 +31,7 @@ services:
 
   # One-shot job: downloads LLM_MODEL (no-op if already present), then exits.
   ollama-pull:
-    image: ollama/ollama:latest
+    image: ollama/ollama:0.40.16
     environment:
       OLLAMA_HOST: ollama:11434
     entrypoint: ["sh", "-c", "ollama pull ${LLM_MODEL}"]
