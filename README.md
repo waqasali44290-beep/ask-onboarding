@@ -202,16 +202,24 @@ Tests use a fake LLM and a fake embedder, so they run in seconds and don't need 
 
 ## Evaluation results
 
+20 questions in `eval/questions.jsonl`: 17 answerable (one from the PDF, one from the document with a hidden prompt injection) and 3 the documents don't cover.
+
 ```bash
-docker compose run --rm backend python /eval/run_eval.py
+docker compose exec backend python -m app.seed                       # load sample docs
+docker compose exec backend python /eval/run_eval.py --label mytest   # ~5 min on CPU
 ```
 
-| Config | Retrieval hit rate @5 | Answer quality | Correct "no answer" |
-|---|---|---|---|
-| chunk 400 / overlap 60 | _TODO_ | _TODO_ | _TODO_ |
-| chunk 800 / overlap 120 | _TODO_ | _TODO_ | _TODO_ |
+| Config | Retrieval hit rate | Answer accuracy | Correct "no answer" | Injection resisted | Median time |
+|---|---|---|---|---|---|
+| **chunk 800 / overlap 120, top-k 5** (default) | 100% | **82%** (14/17) | 100% (3/3) | yes | 16.5 s |
+| chunk 400 / overlap 60, top-k 5 | 100% | – (retrieval only) | – | – | – |
+| chunk 800, top-k 3 + softer "not found" rule | 100% | 65% (11/17) | 100% (3/3) | yes | 8.8 s |
 
----
+- **Chunk size made no difference** here: the sample documents are short (300–600 characters), so most fit in one chunk either way.
+- **Fewer sources made the small model worse**, not better: it dropped citations and answered one question with only "[1]". So top-k stays 5.
+- **Remaining failures** with the default: twice the model said "not found" although the right source was retrieved (doctor's note, Friday deploys), and once it cited the wrong source number. These are limits of a 3B model; a larger model would likely fix them.
+
+Scoring is keyword-based and transparent: an answer counts as correct only if it contains the expected facts **and** cites the expected file.
 
 ## Screenshots
 

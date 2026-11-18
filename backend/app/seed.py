@@ -7,17 +7,19 @@ from app.ingestion.parsers import MIME_TYPES
 from app.ingestion.pipeline import ingest_document, register_upload
 
 
-def seed(folder: Path) -> None:
+def seed(folder: Path, force: bool = False) -> None:
+    """force=True re-indexes unchanged files too, e.g. after changing CHUNK_SIZE."""
     for path in sorted(folder.rglob("*")):
         if path.suffix.lower() not in MIME_TYPES or path.name == "README.md":  # README describes the folder
             continue
         data = path.read_bytes()
         with SessionLocal() as session:
             document, needs_ingestion = register_upload(session, path.name, data)
-        if needs_ingestion:
+        if needs_ingestion or force:
             ingest_document(document.id, path.name, data)
-        print(f"{path.relative_to(folder)}: {'indexed' if needs_ingestion else 'unchanged'}")
+        print(f"{path.relative_to(folder)}: {'indexed' if needs_ingestion or force else 'unchanged'}")
 
 
 if __name__ == "__main__":
-    seed(Path(sys.argv[1] if len(sys.argv) > 1 else "/sample-docs"))
+    arguments = [a for a in sys.argv[1:] if a != "--force"]
+    seed(Path(arguments[0] if arguments else "/sample-docs"), force="--force" in sys.argv)

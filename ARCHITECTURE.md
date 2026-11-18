@@ -34,10 +34,10 @@ The path of one question, step by step: _TODO_ (browser → nginx → `/api/chat
 
 | Decision | Choice | Why / what was tried |
 |---|---|---|
-| Chunk size / overlap | 800 / 120 chars | _TODO: eval numbers vs 400/60_ |
+| Chunk size / overlap | 800 / 120 chars | Same 100% retrieval hit rate as 400/60 on the eval set (documents are short); 800 keeps whole policies together |
 | Embedding model | bge-small-en-v1.5 (local) | _TODO_ |
 | Vector store | pgvector | One database; transactional replace-on-reupload |
-| top-k | 5 | _TODO_ |
+| top-k | 5 | top-k 3 was 2× faster but answer accuracy fell from 82% to 65% (see README) |
 | No-answer detection | similarity cutoff 0.50 + prompt rule | Two layers, because a cutoff alone can't do it (see below) |
 | LLM | qwen2.5:3b via Ollama | Free and local (training project, no API budget). 3B is the largest that answers at a usable speed on a CPU-only laptop with 8 GB for Docker. See the first live test below. |
 
@@ -49,7 +49,7 @@ The path of one question, step by step: _TODO_ (browser → nginx → `/api/chat
 | General knowledge | ~0.37 | "What is the capital of France?" 0.37 |
 | Sounds like company policy, not covered | 0.49 – 0.62 | "Parental leave policy?" 0.62, "Wifi password?" 0.59, "Dress code?" 0.49 |
 
-The third group overlaps the first ("parental leave" 0.62 vs "carry over unused leave" 0.65), so no single cutoff separates them. The cutoff (0.50) therefore only removes clearly off-topic questions, which get an instant "not in the documents" without an LLM call. Near-misses reach the LLM, and the prompt makes it say when the sources don't cover the question. I chose 0.50 rather than 0.55 because real chunks are longer than these test passages, and longer chunks score lower. _TODO: re-check on the 20-question eval set._
+The third group overlaps the first ("parental leave" 0.62 vs "carry over unused leave" 0.65), so no single cutoff separates them. The cutoff (0.50) therefore only removes clearly off-topic questions, which get an instant "not in the documents" without an LLM call. Near-misses reach the LLM, and the prompt makes it say when the sources don't cover the question. I chose 0.50 rather than 0.55 because real chunks are longer than these test passages, and longer chunks score lower. On the 20-question eval set this gives 100% correct no-answers with no answerable question blocked by the cutoff.
 
 **First live test of the LLM** (qwen2.5:3b, CPU only, i7-1355U, 6 short documents):
 
