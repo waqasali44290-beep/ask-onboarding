@@ -9,6 +9,7 @@ class Settings(BaseSettings):
 
     embedding_model: str = "BAAI/bge-small-en-v1.5"
     embedding_dim: int = 384
+    embedding_cache_dir: str = "/root/.cache/fastembed"
 
     chunk_size: int = 800
     chunk_overlap: int = 120
