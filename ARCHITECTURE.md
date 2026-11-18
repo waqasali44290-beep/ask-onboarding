@@ -18,7 +18,7 @@ flowchart LR
     subgraph Answering
         API --> E2[Embed question] --> R[Retriever<br/>top-k cosine] --> D{Relevant<br/>chunks?}
         D -- no --> NA[Not in documents<br/>+ offer ticket]
-        D -- yes --> L[Claude LLM<br/>grounded prompt]
+        D -- yes --> L[Ollama qwen2.5:3b<br/>grounded prompt]
     end
     R <--> DB
     L -->|SSE tokens + citations| U
@@ -28,7 +28,7 @@ flowchart LR
 
 ## 1. How it works today
 
-The path of one question, step by step: _TODO_ (browser → nginx → `/api/chat` → embed → pgvector search → threshold check → prompt → Claude stream → SSE → UI renders citations).
+The path of one question, step by step: _TODO_ (browser → nginx → `/api/chat` → embed → pgvector search → threshold check → prompt → Ollama stream → SSE → UI renders citations).
 
 ## 2. Our choices
 
@@ -39,7 +39,7 @@ The path of one question, step by step: _TODO_ (browser → nginx → `/api/chat
 | Vector store | pgvector | One database; transactional replace-on-reupload |
 | top-k | 5 | _TODO_ |
 | No-answer detection | similarity cutoff 0.50 + prompt rule | Two layers, because a cutoff alone can't do it (see below) |
-| LLM | claude-sonnet-5-5 | _TODO_ |
+| LLM | qwen2.5:3b via Ollama | Free and local (training project, no API budget). 3B is the largest that answers at a usable speed on a CPU-only laptop with 8 GB for Docker. _TODO: speed + quality numbers_ |
 
 **Choosing the no-answer cutoff.** I scored 16 questions against 6 short policy documents (bge-small, best-chunk cosine similarity):
 

@@ -1,11 +1,12 @@
-"""Settings loaded from environment variables (.env). The API key never leaves the server."""
+"""Settings loaded from environment variables (.env), with defaults for local runs."""
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    anthropic_api_key: str = ""
-    llm_model: str = "claude-sonnet-5-5"
-    llm_max_tokens: int = 1024
+    ollama_url: str = "http://localhost:11434"
+    llm_model: str = "qwen2.5:3b"
+    llm_max_tokens: int = 512  # longest answer the model may write
+    llm_context_tokens: int = 4096  # prompt + answer must fit; Ollama's default is smaller
 
     embedding_model: str = "BAAI/bge-small-en-v1.5"
     embedding_dim: int = 384

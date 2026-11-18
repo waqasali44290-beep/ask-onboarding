@@ -43,7 +43,7 @@ A full-stack app where new employees upload company documents (handbook, enginee
 | Backend | Python 3.12 + FastAPI | Async, built-in streaming responses, auto API docs at `/docs` |
 | Vector store | PostgreSQL 16 + **pgvector** | One database for documents, chunks, chats and tickets |
 | Embeddings | `BAAI/bge-small-en-v1.5` via **fastembed** (runs locally) | No extra API key, fast on CPU, 384 dimensions |
-| LLM | Anthropic Claude (`claude-sonnet-5-5`) | Strong at following "answer only from sources", native tool use |
+| LLM | **Ollama** running `qwen2.5:3b` locally | Free, no API key, data never leaves the machine; small enough for a CPU-only laptop |
 | PDF parsing | pypdf | Pure Python, keeps page numbers |
 | Streaming | Server-Sent Events | One-way token stream; simple to proxy through nginx |
 | Run | Docker Compose | `docker compose up` starts db, backend and frontend |
@@ -59,8 +59,8 @@ A full-stack app where new employees upload company documents (handbook, enginee
 ├── ARCHITECTURE.md           # System diagram + design decisions (required)
 ├── AI_LOG.md                 # AI tools, key prompts, AI mistakes caught (required)
 ├── CLAUDE.md                 # Context for Claude Code while developing
-├── docker-compose.yml        # db + backend + frontend
-├── .env.example              # Copy to .env; API keys stay server-side
+├── docker-compose.yml        # db + ollama + backend + frontend
+├── .env.example              # Copy to .env; all settings in one place
 │
 ├── backend/
 │   ├── Dockerfile
@@ -85,7 +85,7 @@ A full-stack app where new employees upload company documents (handbook, enginee
 │   │       ├── embeddings.py #   local embedding model
 │   │       ├── retriever.py  #   pgvector top-k search
 │   │       ├── prompts.py    #   system prompt + context formatting
-│   │       ├── llm.py        #   Claude client + create_ticket tool
+│   │       ├── llm.py        #   Ollama streaming client
 │   │       └── answerer.py   #   retrieve → decide → stream
 │   └── tests/                # pytest (≥5 tests, no real API calls)
 │
@@ -112,15 +112,17 @@ A full-stack app where new employees upload company documents (handbook, enginee
 
 ### Prerequisites
 
-- Docker Desktop (with Docker Compose v2)
-- An Anthropic API key: https://console.anthropic.com
+- Docker Desktop (with Docker Compose v2), with at least 8 GB of memory available to Docker
+- About 4 GB of free disk for the images and models
+
+No API keys are needed: the LLM and the embedding model both run locally.
 
 ### Run the app
 
 ```bash
 git clone <repo-url> ask-onboarding
 cd ask-onboarding
-cp .env.example .env          # then put your ANTHROPIC_API_KEY in .env
+cp .env.example .env
 docker compose up --build
 ```
 
@@ -129,8 +131,9 @@ docker compose up --build
 | Web app | http://localhost:5173 |
 | API + Swagger docs | http://localhost:8000/docs |
 | Postgres | localhost:5432 (user/pass from `.env`) |
+| Ollama | http://localhost:11434 |
 
-The first start downloads the embedding model (about 130 MB), which is cached in a Docker volume after that.
+The first start downloads the LLM (`qwen2.5:3b`, about 1.9 GB) and the embedding model (about 130 MB). Both are cached in Docker volumes, so later starts are fast.
 
 ### Load the sample documents
 
@@ -189,7 +192,7 @@ docker compose run --rm backend pytest -v
 | `test_reupload.py` | Changed file replaces old chunks |
 | `test_tickets.py` | Ticket is saved and listed |
 
-Tests use a fake LLM, so they need no API key and cost nothing.
+Tests use a fake LLM and a fake embedder, so they run in seconds and don't need Ollama.
 
 ---
 
