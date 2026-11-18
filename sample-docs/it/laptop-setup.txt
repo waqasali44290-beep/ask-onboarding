@@ -1,0 +1,5 @@
+Laptop setup
+
+IT gives you a laptop on your first day: a MacBook Pro for engineers and designers, a ThinkPad for everyone else. Log in with the temporary password from your welcome email and change it immediately.
+
+Install the company apps from the Self Service portal: Slack, Zoom, 1Password and the VPN client. Disk encryption is turned on automatically; do not turn it off.

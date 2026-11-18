@@ -1,0 +1,5 @@
+Lost or stolen devices
+
+If your laptop or phone is lost or stolen, report it to the IT help desk within 24 hours at it-help@company.com or extension 4357. IT will remotely lock and wipe the device. You will receive a replacement laptop within 2 working days.
+
+If it was stolen, also file a police report and upload it to the IT ticket.

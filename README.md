@@ -137,7 +137,11 @@ The first start downloads the LLM (`qwen2.5:3b`, about 1.9 GB) and the embedding
 
 ### Load the sample documents
 
-Open **Documents** in the app and drag in the files from `sample-docs/`. _TODO: add a `make seed` / script option._
+```bash
+docker compose exec backend python -m app.seed
+```
+
+This loads the 18 documents in `sample-docs/`. You can also drag files into the **Documents** page.
 
 ### Local development (without Docker for the app code)
 
