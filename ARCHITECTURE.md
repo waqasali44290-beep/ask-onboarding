@@ -38,10 +38,20 @@ The path of one question, step by step: _TODO_ (browser → nginx → `/api/chat
 | Embedding model | bge-small-en-v1.5 (local) | _TODO_ |
 | Vector store | pgvector | One database; transactional replace-on-reupload |
 | top-k | 5 | _TODO_ |
-| No-answer detection | similarity threshold + prompt rule | _TODO_ |
+| No-answer detection | similarity cutoff 0.50 + prompt rule | Two layers, because a cutoff alone can't do it (see below) |
 | LLM | claude-sonnet-5-5 | _TODO_ |
 
-What didn't work: _TODO_
+**Choosing the no-answer cutoff.** I scored 16 questions against 6 short policy documents (bge-small, best-chunk cosine similarity):
+
+| Question type | Score range | Examples |
+|---|---|---|
+| Answerable | 0.65 – 0.85 | "How many vacation days do I get?" 0.71, "What do I do if my laptop is stolen?" 0.85 |
+| General knowledge | ~0.37 | "What is the capital of France?" 0.37 |
+| Sounds like company policy, not covered | 0.49 – 0.62 | "Parental leave policy?" 0.62, "Wifi password?" 0.59, "Dress code?" 0.49 |
+
+The third group overlaps the first ("parental leave" 0.62 vs "carry over unused leave" 0.65), so no single cutoff separates them. The cutoff (0.50) therefore only removes clearly off-topic questions, which get an instant "not in the documents" without an LLM call. Near-misses reach the LLM, and the prompt makes it say when the sources don't cover the question. I chose 0.50 rather than 0.55 because real chunks are longer than these test passages, and longer chunks score lower. _TODO: re-check on the 20-question eval set._
+
+What didn't work: the original default cutoff of 0.35 let every question through, because bge-small scores even unrelated text around 0.35–0.6.
 
 ## 3. Scaling up (5,000 employees, 200k docs, 20k questions/day)
 

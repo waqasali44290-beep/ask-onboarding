@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     chunk_size: int = 800
     chunk_overlap: int = 120
     top_k: int = 5
-    min_similarity: float = 0.35
+    min_similarity: float = 0.50
 
     database_url: str = "postgresql+psycopg://ask:ask@localhost:5432/ask_onboarding"
     max_upload_mb: int = 20
