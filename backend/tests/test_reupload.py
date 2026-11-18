@@ -1,19 +1,9 @@
 """Re-uploading a changed file removes old chunks; answers only use the new version."""
 from sqlalchemy import select
 
-from app.ingestion.pipeline import ingest_document, register_upload
-from app.models import Chunk, Document
-from tests.conftest import fake_embed
-
-
-def upload(session_factory, filename: str, data: bytes) -> tuple[Document, bool]:
-    """Register and ingest a file the same way the upload endpoint does."""
-    with session_factory() as session:
-        document, needs_ingestion = register_upload(session, filename, data)
-    if needs_ingestion:
-        ingest_document(document.id, filename, data, session_factory=session_factory, embed=fake_embed)
-    with session_factory() as session:
-        return session.get(Document, document.id), needs_ingestion
+from app.ingestion.pipeline import register_upload
+from app.models import Chunk
+from tests.conftest import upload
 
 
 def chunk_texts(session_factory, document_id: int) -> list[str]:

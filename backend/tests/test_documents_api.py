@@ -1,31 +1,4 @@
 """HTTP behaviour of the /api/documents endpoints."""
-from functools import partial
-
-import pytest
-from fastapi.testclient import TestClient
-
-from app.api import documents
-from app.db import get_session
-from app.ingestion.pipeline import ingest_document
-from app.main import app
-from tests.conftest import fake_embed
-
-
-@pytest.fixture
-def client(session_factory, monkeypatch):
-    """API client wired to the test database and the fake embedder."""
-
-    def test_session():
-        with session_factory() as session:
-            yield session
-
-    app.dependency_overrides[get_session] = test_session
-    monkeypatch.setattr(
-        documents, "ingest_document",
-        partial(ingest_document, session_factory=session_factory, embed=fake_embed),
-    )
-    yield TestClient(app)
-    app.dependency_overrides.clear()
 
 
 def test_upload_returns_processing_then_document_becomes_ready(client):

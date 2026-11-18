@@ -2,14 +2,21 @@
 import hashlib
 import math
 import re
+from functools import partial
 from pathlib import Path
 
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker
 
+from app.api import documents, retrieval
 from app.config import settings
+from app.db import get_session
+from app.ingestion.pipeline import ingest_document, register_upload
+from app.main import app
+from app.models import Document
 
 TEST_DATABASE = "ask_onboarding_test"
 SCHEMA_FILE = Path(__file__).resolve().parents[1] / "db" / "init.sql"
@@ -59,3 +66,35 @@ def fake_embed(texts: list[str]) -> list[list[float]]:
         norm = math.sqrt(sum(value * value for value in vector)) or 1.0
         vectors.append([value / norm for value in vector])
     return vectors
+
+
+def fake_embed_query(text: str) -> list[float]:
+    return fake_embed([text])[0]
+
+
+def upload(session_factory, filename: str, data: bytes) -> tuple[Document, bool]:
+    """Register and ingest a file the same way the upload endpoint does."""
+    with session_factory() as session:
+        document, needs_ingestion = register_upload(session, filename, data)
+    if needs_ingestion:
+        ingest_document(document.id, filename, data, session_factory=session_factory, embed=fake_embed)
+    with session_factory() as session:
+        return session.get(Document, document.id), needs_ingestion
+
+
+@pytest.fixture
+def client(session_factory, monkeypatch):
+    """API client wired to the test database and the fake embedders."""
+
+    def test_session():
+        with session_factory() as session:
+            yield session
+
+    app.dependency_overrides[get_session] = test_session
+    monkeypatch.setattr(
+        documents, "ingest_document",
+        partial(ingest_document, session_factory=session_factory, embed=fake_embed),
+    )
+    monkeypatch.setattr(retrieval, "embed_query", fake_embed_query)
+    yield TestClient(app)
+    app.dependency_overrides.clear()
