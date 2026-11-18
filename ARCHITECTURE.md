@@ -1,6 +1,5 @@
 # Architecture — Ask Onboarding
 
-> Keep this to 1–3 pages. Fill in each _TODO_ once the decision has been tested.
 
 ## Diagram
 
