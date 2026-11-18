@@ -7,7 +7,6 @@ A full-stack app where new employees upload company documents (handbook, enginee
 - says plainly **"I couldn't find this in the documents"** instead of guessing,
 - and then offers to **open a help-desk ticket** for the question.
 
-> Status: project scaffold. Sections marked _TODO_ are filled in as features are built.
 
 ---
 
@@ -234,7 +233,6 @@ _TODO: add images to `docs/screenshots/` (upload page, chat with citations, no-a
 - Scanned PDFs (images only) are not OCR'd.
 - The local LLM runs on CPU: expect about 10–20 seconds per answer, and about 40 seconds for the first question after start-up while the model loads into memory.
 - Each question is answered on its own: earlier messages are shown in the history but not sent to the LLM, so follow-ups like "what about for managers?" need to repeat the topic.
-- _TODO: add more as they come up._
 
 ---
 
