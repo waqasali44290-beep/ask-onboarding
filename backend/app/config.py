@@ -16,7 +16,6 @@ class Settings(BaseSettings):
     min_similarity: float = 0.35
 
     database_url: str = "postgresql+psycopg://ask:ask@localhost:5432/ask_onboarding"
-    upload_dir: str = "/data/uploads"
     max_upload_mb: int = 20
     cors_origins: str = "http://localhost:5173"
 

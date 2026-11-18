@@ -22,7 +22,6 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - uploads:/data/uploads
       - model_cache:/root/.cache
       - ./sample-docs:/sample-docs:ro
       - ./eval:/eval
@@ -38,5 +37,4 @@ services:
 
 volumes:
   pgdata:
-  uploads:
   model_cache:

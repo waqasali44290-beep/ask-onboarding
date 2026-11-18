@@ -14,7 +14,6 @@ dist/
 *.tsbuildinfo
 
 # Runtime data
-backend/uploads/
 eval/results/*.json
 
 # Editors / OS
