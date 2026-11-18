@@ -68,3 +68,15 @@ class Message(Base):
     citations: Mapped[list[dict]] = mapped_column(JSONB, default=list)
     no_answer: Mapped[bool] = mapped_column(default=False)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+
+
+class Ticket(Base):
+    __tablename__ = "tickets"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(Text)
+    question: Mapped[str] = mapped_column(Text)
+    user_name: Mapped[str] = mapped_column(Text)
+    conversation_id: Mapped[int | None] = mapped_column(ForeignKey("conversations.id", ondelete="SET NULL"))
+    status: Mapped[str] = mapped_column(Text, default="open")
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())

@@ -70,3 +70,23 @@ class ConversationOut(BaseModel):
     id: int
     created_at: datetime
     messages: list[MessageOut]
+
+
+class TicketCreate(BaseModel):
+    question: Question
+    user_name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
+    # Optional: defaults to the start of the question, so "Yes, open a ticket" is one click.
+    title: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)] | None = None
+    conversation_id: int | None = None
+
+
+class TicketOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str
+    question: str
+    user_name: str
+    conversation_id: int | None
+    status: str
+    created_at: datetime
