@@ -181,7 +181,9 @@ docker compose run --rm backend pytest -v
 
 | Test file | Covers |
 |---|---|
+| `test_parsers.py` | PDF/MD/TXT parsing, PDF page numbers, unsupported/empty/broken files |
 | `test_chunking.py` | Chunk size/overlap, offsets map back to source text |
+| `test_documents_api.py` | Upload → processing → ready, 400 for bad types, 404, delete |
 | `test_retrieval.py` | Known question → correct chunk ranks first; top-k cap |
 | `test_no_answer.py` | Off-topic question → "not in the documents" + ticket offer, no guessing |
 | `test_reupload.py` | Changed file replaces old chunks |

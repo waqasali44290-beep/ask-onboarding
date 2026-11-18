@@ -1,1 +1,82 @@
 """Routes: POST /api/documents (upload), GET /api/documents, GET /api/documents/{id}, DELETE /api/documents/{id}."""
+from pathlib import Path
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response, UploadFile
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
+
+from app.config import settings
+from app.db import get_session
+from app.ingestion.parsers import ParseError
+from app.ingestion.pipeline import ingest_document, register_upload
+from app.models import Chunk, Document
+from app.schemas import DocumentDetail, DocumentOut
+
+router = APIRouter(prefix="/api/documents", tags=["documents"])
+
+
+# Plain `def` (not async): FastAPI runs it in a thread pool, so the blocking
+# database calls don't freeze other requests.
+@router.post("", response_model=DocumentOut, status_code=202)
+def upload_document(
+    file: UploadFile,
+    background_tasks: BackgroundTasks,
+    response: Response,
+    session: Session = Depends(get_session),
+):
+    filename = Path(file.filename or "").name  # drop any folder path the browser sends
+    data = file.file.read()
+    if len(data) > settings.max_upload_mb * 1024 * 1024:
+        raise HTTPException(413, f"File is larger than {settings.max_upload_mb} MB.")
+
+    try:
+        document, needs_ingestion = register_upload(session, filename, data)
+    except ParseError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+    if needs_ingestion:
+        background_tasks.add_task(ingest_document, document.id, filename, data)
+    else:
+        response.status_code = 200  # same file already indexed, nothing to do
+    return _with_chunk_count(session, document, DocumentOut)
+
+
+@router.get("", response_model=list[DocumentOut])
+def list_documents(session: Session = Depends(get_session)):
+    counts = (
+        select(Chunk.document_id, func.count().label("chunk_count"))
+        .group_by(Chunk.document_id)
+        .subquery()
+    )
+    rows = session.execute(
+        select(Document, func.coalesce(counts.c.chunk_count, 0))
+        .outerjoin(counts, counts.c.document_id == Document.id)
+        .order_by(Document.updated_at.desc())
+    )
+    return [
+        DocumentOut.model_validate(document).model_copy(update={"chunk_count": chunk_count})
+        for document, chunk_count in rows
+    ]
+
+
+@router.get("/{document_id}", response_model=DocumentDetail)
+def get_document(document_id: int, session: Session = Depends(get_session)):
+    return _with_chunk_count(session, _get_or_404(session, document_id), DocumentDetail)
+
+
+@router.delete("/{document_id}", status_code=204)
+def delete_document(document_id: int, session: Session = Depends(get_session)):
+    session.delete(_get_or_404(session, document_id))
+    session.commit()
+
+
+def _get_or_404(session: Session, document_id: int) -> Document:
+    document = session.get(Document, document_id)
+    if document is None:
+        raise HTTPException(404, "Document not found.")
+    return document
+
+
+def _with_chunk_count(session: Session, document: Document, schema: type[DocumentOut]) -> DocumentOut:
+    chunk_count = session.scalar(select(func.count()).where(Chunk.document_id == document.id))
+    return schema.model_validate(document).model_copy(update={"chunk_count": chunk_count})
