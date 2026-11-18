@@ -11,12 +11,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker
 
-from app.api import documents, retrieval
+from app.api import chat, documents, retrieval
 from app.config import settings
 from app.db import get_session
 from app.ingestion.pipeline import ingest_document, register_upload
 from app.main import app
 from app.models import Document
+from app.rag.llm import LLMError
 
 TEST_DATABASE = "ask_onboarding_test"
 SCHEMA_FILE = Path(__file__).resolve().parents[1] / "db" / "init.sql"
@@ -68,6 +69,25 @@ def fake_embed(texts: list[str]) -> list[list[float]]:
     return vectors
 
 
+class FakeLLM:
+    """Replays fixed text pieces like a streaming LLM and records every prompt it receives."""
+
+    def __init__(self, pieces: list[str], error: str | None = None):
+        self.pieces = pieces
+        self.error = error
+        self.prompts: list[str] = []
+
+    def __call__(self, system: str, user: str):
+        self.prompts.append(user)
+        if self.error:
+            raise LLMError(self.error)
+        yield from self.pieces
+
+
+def fake_llm(*pieces: str, error: str | None = None) -> FakeLLM:
+    return FakeLLM(list(pieces), error)
+
+
 def fake_embed_query(text: str) -> list[float]:
     return fake_embed([text])[0]
 
@@ -95,6 +115,10 @@ def client(session_factory, monkeypatch):
         documents, "ingest_document",
         partial(ingest_document, session_factory=session_factory, embed=fake_embed),
     )
+    app.dependency_overrides[chat.get_session_factory] = lambda: session_factory
     monkeypatch.setattr(retrieval, "embed_query", fake_embed_query)
+    monkeypatch.setattr(chat, "embed_query", fake_embed_query)
+    # Tests that reach the LLM replace this with fake_llm(...).
+    monkeypatch.setattr(chat, "stream_chat", fake_llm(error="no fake LLM set for this test"))
     yield TestClient(app)
     app.dependency_overrides.clear()

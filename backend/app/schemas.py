@@ -46,3 +46,27 @@ class RetrievedChunkOut(BaseModel):
 class RetrieveResponse(BaseModel):
     chunks: list[RetrievedChunkOut]
     answerable: bool  # False -> no chunk is relevant -> "not in the documents"
+
+
+class ChatRequest(BaseModel):
+    question: Question
+    conversation_id: int | None = None  # None starts a new conversation
+
+
+class MessageOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    role: str
+    content: str
+    citations: list[dict]
+    no_answer: bool
+    created_at: datetime
+
+
+class ConversationOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    created_at: datetime
+    messages: list[MessageOut]

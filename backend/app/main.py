@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import documents, retrieval
+from app.api import chat, documents, retrieval
 from app.config import settings
 
 app = FastAPI(title="Ask Onboarding API")
@@ -22,4 +22,5 @@ def health():
 
 app.include_router(documents.router)
 app.include_router(retrieval.router)
-# TODO: include chat and tickets routers as they are built
+app.include_router(chat.router)
+# TODO: include tickets router
