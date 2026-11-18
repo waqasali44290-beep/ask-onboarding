@@ -1,0 +1,3 @@
+{"id": 1, "question": "How many days of paid time off do new employees get?", "expected_answer": "TODO", "expected_source": "TODO.md"}
+{"id": 2, "question": "Who do I contact if my laptop is lost?", "expected_answer": "TODO", "expected_source": "TODO.md"}
+{"id": 3, "question": "What is the capital of France?", "expected_answer": "NO_ANSWER", "expected_source": null}
