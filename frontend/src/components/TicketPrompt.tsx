@@ -1,20 +1,10 @@
 // Shown on 'no answer': the assistant drafts a ticket; the user confirms or edits it.
+// The ticket is opened under the logged-in user, so there is nothing else to type.
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { api, messageOf } from "../api/client";
-import { useUser } from "../auth";
 import type { Ticket } from "../types";
 import { SparkleIcon } from "./Icons";
-
-const NAME_KEY = "ask-onboarding.userName";
-
-function readName(): string {
-  try {
-    return localStorage.getItem(NAME_KEY) ?? "";
-  } catch {
-    return "";
-  }
-}
 
 interface Props {
   question: string;
@@ -23,9 +13,6 @@ interface Props {
 
 export default function TicketPrompt({ question, conversationId }: Props) {
   const [title, setTitle] = useState<string | null>(null); // null = still drafting
-  const user = useUser();
-  const [name, setName] = useState(() => readName() || user.display_name);
-  const [editingName, setEditingName] = useState(false);
   const [state, setState] = useState<"ready" | "saving" | "declined">("ready");
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -52,15 +39,9 @@ export default function TicketPrompt({ question, conversationId }: Props) {
         await api.createTicket({
           title: title.trim(),
           question,
-          user_name: name.trim(),
           conversation_id: conversationId,
         }),
       );
-      try {
-        localStorage.setItem(NAME_KEY, name.trim()); // remember for next time
-      } catch {
-        // storage blocked: the user just types their name again next time
-      }
     } catch (err) {
       setError(messageOf(err));
       setState("ready");
@@ -100,35 +81,12 @@ export default function TicketPrompt({ question, conversationId }: Props) {
         required
       />
 
-      {editingName ? (
-        <>
-          <label htmlFor="ticket-name" className="ticket-label">
-            Your name
-          </label>
-          <input
-            id="ticket-name"
-            className="input"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            required
-            maxLength={100}
-            autoComplete="name"
-          />
-        </>
-      ) : (
-        <p className="muted ticket-as">
-          Opening as <strong>{name}</strong> ·{" "}
-          <button type="button" className="link-button" onClick={() => setEditingName(true)}>
-            change
-          </button>
-        </p>
-      )}
 
       <div className="ticket-row">
         <button
           type="submit"
           className="button button-primary"
-          disabled={state === "saving" || !title.trim() || !name.trim()}
+          disabled={state === "saving" || !title.trim()}
         >
           {state === "saving" ? "Opening…" : "Create ticket"}
         </button>

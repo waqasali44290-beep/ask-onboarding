@@ -1,14 +1,20 @@
-"""Routes: POST /api/tickets/draft (suggested title), POST /api/tickets (create), GET /api/tickets."""
+"""Routes: draft, create, list and update help-desk tickets.
+
+Employees and managers see and close their own tickets; admins see all of
+them, change their status and write the help desk's reply.
+"""
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.auth import current_user
 from app.db import get_session
-from app.models import Conversation, Ticket
+from app.models import Conversation, Ticket, User
 from app.rag.llm import LLMError, stream_chat
 from app.rag.prompts import TICKET_DRAFT_PROMPT
-from app.schemas import TicketCreate, TicketDraft, TicketDraftRequest, TicketOut
+from app.schemas import TicketCreate, TicketDraft, TicketDraftRequest, TicketOut, TicketStatus, TicketUpdate
 from app.text import shorten
 
 router = APIRouter(prefix="/api/tickets", tags=["tickets"], dependencies=[Depends(current_user)])
@@ -30,15 +36,18 @@ def draft_ticket(request: TicketDraftRequest):
 
 
 @router.post("", response_model=TicketOut, status_code=201)
-def create_ticket(request: TicketCreate, session: Session = Depends(get_session)):
+def create_ticket(request: TicketCreate, user: User = Depends(current_user), session: Session = Depends(get_session)):
     """Called when the user accepts the assistant's offer after a 'not in the documents' answer."""
-    if request.conversation_id is not None and session.get(Conversation, request.conversation_id) is None:
-        raise HTTPException(404, "Conversation not found.")
+    if request.conversation_id is not None:
+        conversation = session.get(Conversation, request.conversation_id)
+        if conversation is None or conversation.user_id != user.id:
+            raise HTTPException(404, "Conversation not found.")
 
     ticket = Ticket(
         title=request.title or shorten(request.question, TITLE_LENGTH),
         question=request.question,
-        user_name=request.user_name,
+        user_id=user.id,
+        user_name=user.display_name,
         conversation_id=request.conversation_id,
     )
     session.add(ticket)
@@ -47,5 +56,38 @@ def create_ticket(request: TicketCreate, session: Session = Depends(get_session)
 
 
 @router.get("", response_model=list[TicketOut])
-def list_tickets(session: Session = Depends(get_session)):
-    return session.scalars(select(Ticket).order_by(Ticket.id.desc())).all()
+def list_tickets(
+    status: TicketStatus | None = None,
+    user: User = Depends(current_user),
+    session: Session = Depends(get_session),
+):
+    query = select(Ticket).order_by(Ticket.id.desc())
+    if user.role != "admin":
+        query = query.where(Ticket.user_id == user.id)
+    if status:
+        query = query.where(Ticket.status == status)
+    return session.scalars(query).all()
+
+
+@router.patch("/{ticket_id}", response_model=TicketOut)
+def update_ticket(
+    ticket_id: int,
+    request: TicketUpdate,
+    user: User = Depends(current_user),
+    session: Session = Depends(get_session),
+):
+    ticket = session.get(Ticket, ticket_id)
+    is_admin = user.role == "admin"
+    if ticket is None or (not is_admin and ticket.user_id != user.id):
+        raise HTTPException(404, "Ticket not found.")
+    # Non-admins may only close their own ticket ("my question is solved").
+    if not is_admin and (request.response is not None or request.status not in (None, "resolved")):
+        raise HTTPException(403, "Only the help desk can change this.")
+
+    if request.response is not None:
+        ticket.response = request.response
+    if request.status is not None and request.status != ticket.status:
+        ticket.status = request.status
+        ticket.resolved_at = datetime.now(timezone.utc) if request.status == "resolved" else None
+    session.commit()
+    return ticket

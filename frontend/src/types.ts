@@ -72,14 +72,19 @@ export interface ChatMessage {
   offerTicket: boolean; // only for live no-answer replies, not ones loaded from history
 }
 
+export type TicketStatus = "open" | "in_progress" | "resolved";
+
 export interface Ticket {
   id: number;
   title: string;
   question: string;
   user_name: string;
   conversation_id: number | null;
-  status: string;
+  status: TicketStatus;
+  response: string | null;
   created_at: string;
+  updated_at: string;
+  resolved_at: string | null;
 }
 
 export interface ConversationSummary {
@@ -92,6 +97,5 @@ export interface ConversationSummary {
 export interface NewTicket {
   title: string;
   question: string;
-  user_name: string;
   conversation_id: number | null;
 }

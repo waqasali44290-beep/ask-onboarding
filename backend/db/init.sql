@@ -72,3 +72,10 @@ CREATE TABLE IF NOT EXISTS user_sessions (
 
 ALTER TABLE conversations ADD COLUMN IF NOT EXISTS user_id INT REFERENCES users(id) ON DELETE CASCADE;
 ALTER TABLE tickets ADD COLUMN IF NOT EXISTS user_id INT REFERENCES users(id) ON DELETE SET NULL;
+
+-- Ticket management: the help desk replies and moves tickets through their statuses.
+ALTER TABLE tickets ADD COLUMN IF NOT EXISTS response TEXT;
+ALTER TABLE tickets ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+ALTER TABLE tickets ADD COLUMN IF NOT EXISTS resolved_at TIMESTAMPTZ;
+ALTER TABLE tickets DROP CONSTRAINT IF EXISTS tickets_status_check;
+ALTER TABLE tickets ADD CONSTRAINT tickets_status_check CHECK (status IN ('open', 'in_progress', 'resolved'));

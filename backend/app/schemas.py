@@ -1,6 +1,6 @@
 """Pydantic request/response models used by the API (the API contract lives here)."""
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
@@ -72,9 +72,11 @@ class ConversationOut(BaseModel):
     messages: list[MessageOut]
 
 
+TicketStatus = Literal["open", "in_progress", "resolved"]
+
+
 class TicketCreate(BaseModel):
-    question: Question
-    user_name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
+    question: Question  # the user comes from the login, not the request
     # Optional: defaults to the start of the question, so "Yes, open a ticket" is one click.
     title: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)] | None = None
     conversation_id: int | None = None
@@ -88,8 +90,16 @@ class TicketOut(BaseModel):
     question: str
     user_name: str
     conversation_id: int | None
-    status: str
+    status: TicketStatus
+    response: str | None
     created_at: datetime
+    updated_at: datetime
+    resolved_at: datetime | None
+
+
+class TicketUpdate(BaseModel):
+    status: TicketStatus | None = None
+    response: Annotated[str, StringConstraints(strip_whitespace=True, max_length=4000)] | None = None
 
 
 class ConversationSummary(BaseModel):

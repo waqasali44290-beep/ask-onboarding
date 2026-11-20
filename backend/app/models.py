@@ -82,8 +82,11 @@ class Ticket(Base):
     user_name: Mapped[str] = mapped_column(Text)
     conversation_id: Mapped[int | None] = mapped_column(ForeignKey("conversations.id", ondelete="SET NULL"))
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
-    status: Mapped[str] = mapped_column(Text, default="open")
+    status: Mapped[str] = mapped_column(Text, default="open")  # open | in_progress | resolved
+    response: Mapped[str | None] = mapped_column(Text)  # the help desk reply
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
+    resolved_at: Mapped[datetime | None]
 
 
 class User(Base):
