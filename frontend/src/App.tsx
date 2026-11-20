@@ -1,7 +1,8 @@
 import { NavLink, Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./auth";
-import { ChatIcon, FileIcon, TicketIcon } from "./components/Icons";
+import { ChartIcon, ChatIcon, FileIcon, TicketIcon } from "./components/Icons";
 import { LoadingState } from "./components/States";
+import AdminPage from "./pages/AdminPage";
 import ChatPage from "./pages/ChatPage";
 import LoginPage from "./pages/LoginPage";
 import TicketsPage from "./pages/TicketsPage";
@@ -36,6 +37,11 @@ export default function App() {
         <NavLink to="/tickets">
           <TicketIcon /> {isAdmin ? "Tickets" : "My tickets"}
         </NavLink>
+        {isAdmin && (
+          <NavLink to="/admin">
+            <ChartIcon /> Admin
+          </NavLink>
+        )}
         <span className="user-chip">
           <span className="user-name">{user.display_name}</span>
           <span className="user-role">{ROLE_LABELS[user.role] ?? user.role}</span>
@@ -49,6 +55,7 @@ export default function App() {
           <Route path="/" element={<Navigate to="/chat" replace />} />
           <Route path="/chat" element={<ChatPage />} />
           {isAdmin && <Route path="/upload" element={<UploadPage />} />}
+          {isAdmin && <Route path="/admin" element={<AdminPage />} />}
           <Route path="/tickets" element={<TicketsPage />} />
           <Route path="*" element={<Navigate to="/chat" replace />} />
         </Routes>

@@ -1,6 +1,7 @@
 """Orchestrates one question: retrieve -> no-answer check -> prompt LLM -> stream tokens and citations."""
 import logging
 import re
+import time
 from collections.abc import Iterator
 from dataclasses import asdict, dataclass
 
@@ -37,6 +38,8 @@ def answer_question(
     [sources ->] no_answer -> done               (not in the documents)
     [sources ->] error                           (LLM unreachable)
     """
+    started = time.monotonic()
+    usage: dict = {}  # filled by the LLM client with token counts
     with session_factory() as session:
         if conversation_id is None:
             conversation = Conversation(user_id=user_id)
@@ -49,7 +52,7 @@ def answer_question(
 
     # Layer 1: nothing similar enough -> answer "not found" without calling the LLM.
     if not chunks:
-        yield from _no_answer(session_factory, conversation_id)
+        yield from _no_answer(session_factory, conversation_id, _metrics(started, usage))
         return
 
     sources = [{"n": number, **asdict(chunk)} for number, chunk in enumerate(chunks, start=1)]
@@ -58,7 +61,7 @@ def answer_question(
     answer = ""
     streaming = False  # becomes True once we know the reply is not the NOT_FOUND marker
     try:
-        for piece in llm(SYSTEM_PROMPT, build_user_message(question, chunks)):
+        for piece in llm(SYSTEM_PROMPT, build_user_message(question, chunks), usage=usage):
             answer += piece
             if streaming:
                 yield ChatEvent("token", {"text": piece})
@@ -80,12 +83,13 @@ def answer_question(
     # Layer 2: the model read the sources and said they don't answer the question.
     # Also catches a model that wrote some text and then the marker.
     if not answer.strip() or NOT_FOUND_MARKER in answer:
-        yield from _no_answer(session_factory, conversation_id)
+        yield from _no_answer(session_factory, conversation_id, _metrics(started, usage))
         return
 
     citations = _cited_sources(answer, sources)
     with session_factory() as session:
-        message = Message(conversation_id=conversation_id, role="assistant", content=answer.strip(), citations=citations)
+        message = Message(conversation_id=conversation_id, role="assistant", content=answer.strip(),
+                          citations=citations, **_metrics(started, usage))
         session.add(message)
         session.commit()
         yield ChatEvent("done", {"conversation_id": conversation_id, "message_id": message.id,
@@ -98,9 +102,22 @@ def _cited_sources(answer: str, sources: list[dict]) -> list[dict]:
     return [source for source in sources if source["n"] in cited_numbers]
 
 
-def _no_answer(session_factory: sessionmaker, conversation_id: int) -> Iterator[ChatEvent]:
+def _metrics(started: float, usage: dict) -> dict:
+    """Latency and token counts saved with each answer (shown on the admin page)."""
+    metrics = {
+        "latency_ms": round((time.monotonic() - started) * 1000),
+        "prompt_tokens": usage.get("prompt_tokens"),
+        "completion_tokens": usage.get("completion_tokens"),
+    }
+    logger.info("answer latency_ms=%(latency_ms)s prompt_tokens=%(prompt_tokens)s "
+                "completion_tokens=%(completion_tokens)s", metrics)
+    return metrics
+
+
+def _no_answer(session_factory: sessionmaker, conversation_id: int, metrics: dict) -> Iterator[ChatEvent]:
     with session_factory() as session:
-        message = Message(conversation_id=conversation_id, role="assistant", content=NO_ANSWER_MESSAGE, no_answer=True)
+        message = Message(conversation_id=conversation_id, role="assistant", content=NO_ANSWER_MESSAGE,
+                          no_answer=True, **metrics)
         session.add(message)
         session.commit()
     yield ChatEvent("no_answer", {"message": NO_ANSWER_MESSAGE, "offer_ticket": True})

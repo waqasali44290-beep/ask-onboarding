@@ -39,6 +39,12 @@ export const TicketIcon = () => (
   </Icon>
 );
 
+export const ChartIcon = () => (
+  <Icon>
+    <path d="M3 3v18h18M7 15l4-4 3 3 6-6" />
+  </Icon>
+);
+
 export const PlusIcon = () => (
   <Icon>
     <path d="M12 5v14M5 12h14" />

@@ -86,3 +86,8 @@ ALTER TABLE documents ADD COLUMN IF NOT EXISTS visibility TEXT NOT NULL DEFAULT 
 
 -- Feedback: thumbs up (1) or down (-1) on an answer, NULL = not rated.
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS feedback SMALLINT CHECK (feedback IN (-1, 1));
+
+-- Observability: how long each answer took and how many tokens it used.
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS latency_ms INT;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS prompt_tokens INT;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS completion_tokens INT;

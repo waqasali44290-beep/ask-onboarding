@@ -78,11 +78,13 @@ class FakeLLM:
         self.error = error
         self.prompts: list[str] = []
 
-    def __call__(self, system: str, user: str):
+    def __call__(self, system: str, user: str, usage: dict | None = None):
         self.prompts.append(user)
         if self.error:
             raise LLMError(self.error)
         yield from self.pieces
+        if usage is not None:  # like Ollama: counts arrive once the stream is complete
+            usage.update(prompt_tokens=len(user.split()), completion_tokens=len("".join(self.pieces).split()))
 
 
 def fake_llm(*pieces: str, error: str | None = None) -> FakeLLM:

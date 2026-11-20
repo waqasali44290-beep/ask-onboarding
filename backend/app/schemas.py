@@ -141,3 +141,31 @@ class DocumentUpdate(BaseModel):
 
 class FeedbackRequest(BaseModel):
     rating: Literal[-1, 0, 1]  # 0 removes the rating
+
+
+class AnswerLog(BaseModel):
+    message_id: int
+    question: str
+    answer: str
+    user_name: str
+    created_at: datetime
+    latency_ms: int | None
+    prompt_tokens: int | None
+    completion_tokens: int | None
+    cost_usd: float
+    no_answer: bool
+    feedback: int | None
+
+
+class AdminStats(BaseModel):
+    answers: int
+    no_answers: int
+    no_answer_rate: float
+    avg_latency_ms: int | None
+    prompt_tokens: int
+    completion_tokens: int
+    total_cost_usd: float
+    thumbs_up: int
+    thumbs_down: int
+    tickets: dict[str, int]  # status -> count
+    recent: list[AnswerLog]

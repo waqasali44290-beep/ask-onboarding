@@ -7,6 +7,9 @@ class Settings(BaseSettings):
     llm_model: str = "qwen2.5:3b"
     llm_max_tokens: int = 512  # longest answer the model may write
     llm_context_tokens: int = 4096  # prompt + answer must fit; Ollama's default is smaller
+    # Price per million tokens, for the cost column on the admin page. 0 for a local model.
+    llm_cost_per_million_input_tokens: float = 0.0
+    llm_cost_per_million_output_tokens: float = 0.0
 
     embedding_model: str = "BAAI/bge-small-en-v1.5"
     embedding_dim: int = 384

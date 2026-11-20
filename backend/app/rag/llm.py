@@ -6,15 +6,16 @@ import httpx
 
 from app.config import settings
 
-# (system prompt, user message) -> stream of text pieces. Tests pass a fake with this shape.
-StreamChat = Callable[[str, str], Iterator[str]]
+# (system prompt, user message, usage=None) -> stream of text pieces. Tests pass a fake with this shape.
+StreamChat = Callable[..., Iterator[str]]
 
 
 class LLMError(RuntimeError):
     """The LLM could not be reached or failed mid-answer."""
 
 
-def stream_chat(system: str, user: str) -> Iterator[str]:
+def stream_chat(system: str, user: str, usage: dict | None = None) -> Iterator[str]:
+    """If `usage` is given, it receives prompt_tokens and completion_tokens once the answer is complete."""
     request = {
         "model": settings.llm_model,
         "stream": True,
@@ -41,6 +42,9 @@ def stream_chat(system: str, user: str) -> Iterator[str]:
                 if text := data.get("message", {}).get("content"):
                     yield text
                 if data.get("done"):
+                    if usage is not None:  # Ollama reports token counts in its last message
+                        usage["prompt_tokens"] = data.get("prompt_eval_count", 0)
+                        usage["completion_tokens"] = data.get("eval_count", 0)
                     return
     except httpx.HTTPError as exc:
         raise LLMError(f"Could not reach the language model: {exc}") from exc

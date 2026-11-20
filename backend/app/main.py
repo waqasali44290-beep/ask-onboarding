@@ -5,7 +5,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import auth, chat, documents, messages, retrieval, tickets
+from app.api import admin, auth, chat, documents, messages, retrieval, tickets
 from app.auth import ensure_demo_users
 from app.config import settings
 from app.db import SessionLocal, engine
@@ -38,6 +38,7 @@ def health():
     return {"status": "ok"}
 
 
+app.include_router(admin.router)
 app.include_router(auth.router)
 app.include_router(documents.router)
 app.include_router(retrieval.router)

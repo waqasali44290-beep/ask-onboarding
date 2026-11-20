@@ -41,6 +41,34 @@ export interface Source {
 
 export type Rating = 1 | -1;
 
+export interface AnswerLog {
+  message_id: number;
+  question: string;
+  answer: string;
+  user_name: string;
+  created_at: string;
+  latency_ms: number | null;
+  prompt_tokens: number | null;
+  completion_tokens: number | null;
+  cost_usd: number;
+  no_answer: boolean;
+  feedback: Rating | null;
+}
+
+export interface AdminStats {
+  answers: number;
+  no_answers: number;
+  no_answer_rate: number;
+  avg_latency_ms: number | null;
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_cost_usd: number;
+  thumbs_up: number;
+  thumbs_down: number;
+  tickets: Record<string, number>;
+  recent: AnswerLog[];
+}
+
 export interface StoredMessage {
   id: number;
   role: "user" | "assistant";
