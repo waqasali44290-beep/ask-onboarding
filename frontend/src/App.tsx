@@ -1,16 +1,28 @@
 import { NavLink, Navigate, Route, Routes } from "react-router-dom";
+import { ChatIcon, FileIcon, TicketIcon } from "./components/Icons";
 import ChatPage from "./pages/ChatPage";
-import UploadPage from "./pages/UploadPage";
 import TicketsPage from "./pages/TicketsPage";
+import UploadPage from "./pages/UploadPage";
 
 export default function App() {
   return (
     <>
       <nav className="nav">
-        <strong>Ask Onboarding</strong>
-        <NavLink to="/chat">Chat</NavLink>
-        <NavLink to="/upload">Documents</NavLink>
-        <NavLink to="/tickets">Tickets</NavLink>
+        <span className="brand">
+          <span className="brand-mark" aria-hidden="true">
+            A
+          </span>
+          Ask Onboarding
+        </span>
+        <NavLink to="/chat">
+          <ChatIcon /> Chat
+        </NavLink>
+        <NavLink to="/upload">
+          <FileIcon /> Documents
+        </NavLink>
+        <NavLink to="/tickets">
+          <TicketIcon /> Tickets
+        </NavLink>
       </nav>
       <main>
         <Routes>

@@ -1,5 +1,6 @@
 // Drag-and-drop area plus a normal file picker, limited to .pdf, .md and .txt.
 import { useState, type DragEvent } from "react";
+import { UploadIcon } from "./Icons";
 
 const ACCEPTED = ".pdf,.md,.markdown,.txt";
 
@@ -33,6 +34,7 @@ export default function FileDropzone({ onFiles }: { onFiles: (files: File[]) => 
           event.target.value = ""; // allow choosing the same file again
         }}
       />
+      <span className="dropzone-icon"><UploadIcon /></span>
       <span className="dropzone-title">Drop files here or click to choose</span>
       <span className="muted">PDF, Markdown or TXT · up to 20 MB each</span>
     </label>
