@@ -101,3 +101,13 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TR
 
 -- Self-learning knowledge base: a help-desk reply can become a document.
 ALTER TABLE tickets ADD COLUMN IF NOT EXISTS document_id INT REFERENCES documents(id) ON DELETE SET NULL;
+
+-- Onboarding journey: which checklist tasks each user finished, and quiz questions per document.
+CREATE TABLE IF NOT EXISTS onboarding_progress (
+    user_id       INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    task_id       TEXT NOT NULL,                 -- an id from app/onboarding.py, or 'quiz'
+    score         INT,                           -- best quiz score in percent (task 'quiz' only)
+    completed_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (user_id, task_id)
+);
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS quiz JSONB NOT NULL DEFAULT '[]';

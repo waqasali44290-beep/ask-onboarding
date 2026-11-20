@@ -46,13 +46,20 @@ const newKey = () => `local-${nextKey++}`;
 export function useChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [conversationId, setConversationId] = useState<number | null>(readStoredId);
+  // The same id in a ref: state updates only apply on the next render, but send() may run
+  // right after startNewConversation() (e.g. "Ask the assistant" links) and must see the new value.
+  const currentId = useRef<number | null>(conversationId);
+  const setId = (id: number | null) => {
+    currentId.current = id;
+    setConversationId(id);
+  };
   const [history, setHistory] = useState<"loading" | "ready" | "error">(conversationId ? "loading" : "ready");
 
   const requestedId = useRef<number | null>(null); // ignore a slow load if the user already switched again
 
   const openConversation = useCallback(async (id: number) => {
     requestedId.current = id;
-    setConversationId(id);
+    setId(id);
     storeId(id);
     setMessages([]);
     setHistory("loading");
@@ -66,7 +73,7 @@ export function useChat() {
       if (err instanceof ApiError && err.status === 404) {
         // conversation was deleted (e.g. database reset): start a new one
         storeId(null);
-        setConversationId(null);
+        setId(null);
         setHistory("ready");
       } else {
         setHistory("error");
@@ -94,12 +101,12 @@ export function useChat() {
       { key: answerKey, role: "assistant", content: "", sources: [], citations: [], status: "searching", offerTicket: false, messageId: null, feedback: null, suggestions: [] },
     ]);
 
-    await streamChat(question, conversationId, {
+    await streamChat(question, currentId.current, {
       onSources: (sources) => update(answerKey, () => ({ sources, status: "thinking" })),
       onToken: (text) => update(answerKey, (m) => ({ content: m.content + text, status: "streaming" })),
       onNoAnswer: (message) => update(answerKey, () => ({ content: message, status: "no_answer", offerTicket: true })),
       onDone: (done) => {
-        setConversationId(done.conversation_id);
+        setId(done.conversation_id);
         storeId(done.conversation_id);
         update(answerKey, () => ({
           citations: done.citations,
@@ -116,7 +123,7 @@ export function useChat() {
     requestedId.current = null;
     setHistory("ready");
     setMessages([]);
-    setConversationId(null);
+    setId(null);
     storeId(null);
   }
 

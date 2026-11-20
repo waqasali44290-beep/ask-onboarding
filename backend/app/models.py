@@ -25,6 +25,7 @@ class Document(Base):
     error: Mapped[str | None] = mapped_column(Text)
     full_text: Mapped[str | None] = mapped_column(Text)
     suggested_questions: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    quiz: Mapped[list[dict]] = mapped_column(JSONB, default=list)  # [{question, options, answer}]
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
 
@@ -115,3 +116,12 @@ class UserSession(Base):
     token_hash: Mapped[str] = mapped_column(Text, primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     expires_at: Mapped[datetime]
+
+
+class OnboardingProgress(Base):
+    __tablename__ = "onboarding_progress"
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    task_id: Mapped[str] = mapped_column(Text, primary_key=True)
+    score: Mapped[int | None]
+    completed_at: Mapped[datetime] = mapped_column(server_default=func.now())

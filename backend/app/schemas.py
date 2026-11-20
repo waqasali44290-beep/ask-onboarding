@@ -207,3 +207,33 @@ class GapOut(BaseModel):
     topic: str
     count: int  # how many times it was asked without an answer
     examples: list[str]  # different wordings people used
+
+
+class TaskOut(BaseModel):
+    id: str
+    title: str
+    description: str
+    ask: str
+    done: bool
+
+
+class JourneyOut(BaseModel):
+    tasks: list[TaskOut]
+    quiz_best: int | None  # best quiz score in percent
+    quiz_pass_percent: int
+
+
+class TaskUpdate(BaseModel):
+    done: bool
+
+
+class QuizItem(BaseModel):
+    question: str
+    options: list[str]
+    answer: int  # index into options
+    filename: str  # the document it was written from
+
+
+class QuizResult(BaseModel):
+    correct: int = Field(ge=0)
+    total: int = Field(ge=1)

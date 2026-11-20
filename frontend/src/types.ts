@@ -77,6 +77,27 @@ export interface AnswerLog {
   feedback: Rating | null;
 }
 
+export interface OnboardingTask {
+  id: string;
+  title: string;
+  description: string;
+  ask: string;
+  done: boolean;
+}
+
+export interface Journey {
+  tasks: OnboardingTask[];
+  quiz_best: number | null;
+  quiz_pass_percent: number;
+}
+
+export interface QuizItem {
+  question: string;
+  options: string[];
+  answer: number;
+  filename: string;
+}
+
 export interface Gap {
   topic: string;
   count: number;

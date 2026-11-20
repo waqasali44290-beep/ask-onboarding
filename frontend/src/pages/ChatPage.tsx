@@ -1,6 +1,6 @@
 // Chat page: conversation sidebar, history, streaming answer, citations, ticket offer.
 import { useEffect, useState, type FormEvent, type KeyboardEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
 import CitationPanel from "../components/CitationPanel";
 import ConversationSidebar from "../components/ConversationSidebar";
@@ -26,6 +26,7 @@ export default function ChatPage() {
   const [draft, setDraft] = useState("");
   const [openSource, setOpenSource] = useState<Source | null>(null);
   const [examples, setExamples] = useState<string[]>(FALLBACK_QUESTIONS);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     api
@@ -42,6 +43,16 @@ export default function ChatPage() {
     setDraft("");
     send(trimmed).then(refreshConversations); // a new conversation appears in the sidebar
   }
+
+  // A link like /chat?ask=How%20do%20I... starts a new conversation with that question.
+  const askFromLink = searchParams.get("ask");
+  useEffect(() => {
+    if (!askFromLink || history !== "ready" || busy) return;
+    setSearchParams({}, { replace: true }); // only once, even if the page re-renders
+    startNewConversation();
+    ask(askFromLink);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run when the link or readiness changes
+  }, [askFromLink, history]);
 
   async function deleteConversation(conversation: ConversationSummary) {
     if (!window.confirm(`Delete the conversation "${conversation.title}"?`)) return;

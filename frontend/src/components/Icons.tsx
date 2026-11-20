@@ -52,6 +52,12 @@ export const UsersIcon = () => (
   </Icon>
 );
 
+export const FlagIcon = () => (
+  <Icon>
+    <path d="M4 22V4M4 4h13l-2 4 2 4H4" />
+  </Icon>
+);
+
 export const PlusIcon = () => (
   <Icon>
     <path d="M12 5v14M5 12h14" />

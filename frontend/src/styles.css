@@ -794,3 +794,62 @@ h1 { background: var(--gradient); -webkit-background-clip: text; background-clip
 .gap-rank { display: grid; place-items: center; width: 1.8rem; height: 1.8rem; border-radius: 50%; background: var(--gradient); color: #fff; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; }
 .gap:nth-child(n + 4) .gap-rank { background: var(--surface-2); color: var(--muted); }
 .gap-count { font-weight: 700; color: var(--accent-2); white-space: nowrap; }
+
+/* Onboarding journey */
+.journey-hero {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  border-radius: 18px;
+  background: var(--gradient);
+  color: #fff;
+  box-shadow: 0 12px 34px rgb(168 85 247 / 0.35);
+}
+.journey-hero p { margin: 0.25rem 0 0; opacity: 0.92; }
+.hero-title { color: #fff; background: none; -webkit-background-clip: initial; background-clip: initial; margin: 0; }
+.ring { position: relative; flex-shrink: 0; display: grid; place-items: center; border-radius: 50%; background: rgb(255 255 255 / 0.95); }
+.ring svg { transform: rotate(-90deg); }
+.ring circle { fill: none; stroke-width: 10; }
+.ring-track { stroke: #ede9fe; }
+.ring-value { stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; }
+.ring-label { position: absolute; font-size: 1.35rem; font-weight: 800; color: #6d28d9; }
+.badges { list-style: none; margin: 0.9rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.badges li { padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.82rem; font-weight: 600; }
+.badge-earned { background: #fff; color: #6d28d9; box-shadow: 0 2px 8px rgb(0 0 0 / 0.15); }
+.badge-locked { background: rgb(255 255 255 / 0.18); color: rgb(255 255 255 / 0.75); filter: grayscale(1); }
+
+.checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.task { display: flex; align-items: center; gap: 0.85rem; padding: 0.8rem 1rem; background: var(--surface); border-radius: var(--radius); box-shadow: 0 2px 12px rgb(16 24 40 / 0.06); border-left: 4px solid var(--accent); }
+.task-done { border-left-color: var(--accent-5); }
+.task input { width: 1.2rem; height: 1.2rem; accent-color: var(--accent-5); flex-shrink: 0; cursor: pointer; }
+.task-text { flex: 1; display: flex; flex-direction: column; cursor: pointer; }
+.task-text .muted { font-size: 0.85rem; }
+.task-title { font-weight: 600; }
+.task-done .task-title { text-decoration: line-through; color: var(--muted); }
+.task-ask { font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+
+.quiz { display: flex; flex-direction: column; align-items: flex-start; gap: 0.75rem; padding: 1.25rem; background: var(--surface); border-radius: var(--radius); box-shadow: 0 2px 14px rgb(16 24 40 / 0.06); }
+.quiz p { margin: 0; }
+.quiz-progress { font-size: 0.8rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; }
+.quiz-question { margin: 0; font-size: 1.1rem; }
+.quiz-options { display: grid; gap: 0.5rem; width: 100%; }
+.quiz-option { font: inherit; display: flex; align-items: center; gap: 0.6rem; padding: 0.7rem 0.9rem; border: 2px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); text-align: left; cursor: pointer; }
+.quiz-option:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); }
+.quiz-option:disabled { cursor: default; }
+.quiz-letter { display: grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: 7px; background: var(--gradient-soft); color: var(--accent); font-weight: 700; flex-shrink: 0; }
+.quiz-right { border-color: var(--accent-5); background: #ecfdf5; }
+.quiz-wrong { border-color: #f43f5e; background: #fff1f2; }
+@media (prefers-color-scheme: dark) {
+  .quiz-right { background: #064e3b; }
+  .quiz-wrong { background: #4c0519; }
+}
+.quiz-feedback { display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%; flex-wrap: wrap; }
+.quiz-result { align-items: center; text-align: center; width: 100%; }
+.quiz-score { font-size: 3rem; font-weight: 800; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+@media (max-width: 640px) {
+  .journey-hero { flex-direction: column; text-align: center; }
+  .badges { justify-content: center; }
+  .task { flex-wrap: wrap; }
+}

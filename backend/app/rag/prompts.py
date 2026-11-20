@@ -31,6 +31,16 @@ SUGGEST_QUESTIONS_PROMPT = """Write 3 short questions a new employee might ask t
 One question per line. No numbering, no extra text."""
 
 
+QUIZ_PROMPT = """Write one multiple-choice question that checks a new employee understood the document below.
+Use exactly this format:
+Q: <question>
+A) <option>
+B) <option>
+C) <option>
+D) <option>
+Answer: <letter>"""
+
+
 def build_user_message(
     question: str, chunks: list[RetrievedChunk], previous: tuple[str, str] | None = None
 ) -> str:
