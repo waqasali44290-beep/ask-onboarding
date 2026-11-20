@@ -79,3 +79,7 @@ ALTER TABLE tickets ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEF
 ALTER TABLE tickets ADD COLUMN IF NOT EXISTS resolved_at TIMESTAMPTZ;
 ALTER TABLE tickets DROP CONSTRAINT IF EXISTS tickets_status_check;
 ALTER TABLE tickets ADD CONSTRAINT tickets_status_check CHECK (status IN ('open', 'in_progress', 'resolved'));
+
+-- Access control: some documents are for managers (and admins) only.
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS visibility TEXT NOT NULL DEFAULT 'everyone'
+    CHECK (visibility IN ('everyone', 'managers'));

@@ -16,6 +16,7 @@ class DocumentOut(BaseModel):
     filename: str
     mime_type: str
     status: str  # processing | ready | failed
+    visibility: str  # everyone | managers
     error: str | None
     chunk_count: int = 0
     created_at: datetime
@@ -71,6 +72,8 @@ class ConversationOut(BaseModel):
     created_at: datetime
     messages: list[MessageOut]
 
+
+Visibility = Literal["everyone", "managers"]
 
 TicketStatus = Literal["open", "in_progress", "resolved"]
 
@@ -129,3 +132,7 @@ class UserOut(BaseModel):
     username: str
     display_name: str
     role: str
+
+
+class DocumentUpdate(BaseModel):
+    visibility: Visibility

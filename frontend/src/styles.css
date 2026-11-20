@@ -326,6 +326,8 @@ main { max-width: 1180px; margin: 0 auto; padding: 1.5rem 1.25rem; }
 .ticket-waiting { margin: 0; font-size: 0.9rem; }
 .ticket-admin { display: flex; flex-direction: column; gap: 0.45rem; }
 .select { width: auto; }
+.select-small { padding: 0.25rem 0.5rem; font-size: 0.85rem; }
+.upload-options { display: flex; align-items: center; gap: 0.6rem; margin-top: 1.25rem; font-size: 0.9rem; color: var(--muted); }
 
 /* ---------- Chat layout: sidebar + conversation ---------- */
 
@@ -543,5 +545,5 @@ button.cite:hover { background: var(--accent); color: var(--accent-text); }
   .nav { padding: 0 0.75rem; }
   .nav a { padding: 0.4rem 0.5rem; }
   .message-user, .message-assistant { max-width: 100%; }
-  .table th:nth-child(4), .table td:nth-child(4) { display: none; }
+  .table th:nth-child(5), .table td:nth-child(5) { display: none; }
 }

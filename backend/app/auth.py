@@ -75,6 +75,12 @@ def require_role(*roles: str):
     return check
 
 
+def visible_to(user: User) -> list[str]:
+    """Document visibilities this user may read. Every query that returns document
+    text or chunks filters on this, so hidden content never leaves the database."""
+    return ["everyone", "managers"] if user.role in ("manager", "admin") else ["everyone"]
+
+
 def ensure_demo_users(session: Session) -> None:
     for username, display_name, role in DEMO_USERS:
         if session.scalar(select(User).where(User.username == username)) is None:

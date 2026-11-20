@@ -23,15 +23,23 @@ class RetrievedChunk:
     score: float  # cosine similarity: 1.0 = same meaning, ~0.4 = unrelated (for bge-small)
 
 
-def search(session: Session, question: str, top_k: int, embed: QueryEmbedder = embed_query) -> list[RetrievedChunk]:
+def search(
+    session: Session,
+    question: str,
+    top_k: int,
+    visibilities: list[str],
+    embed: QueryEmbedder = embed_query,
+) -> list[RetrievedChunk]:
     """Best-matching chunks first. Only documents with status 'ready' are searched,
-    so a file that is being re-processed never answers from its old version."""
+    so a file that is being re-processed never answers from its old version.
+    Only documents with one of `visibilities` are searched: access control happens
+    here, before the LLM, so no prompt can talk the model into revealing them."""
     # pgvector's <=> operator: cosine distance = 1 - cosine similarity.
     distance = Chunk.embedding.cosine_distance(embed(question)).label("distance")
     rows = session.execute(
         select(Chunk, Document.filename, distance)
         .join(Document)
-        .where(Document.status == "ready")
+        .where(Document.status == "ready", Document.visibility.in_(visibilities))
         .order_by(distance)
         .limit(top_k)
     )

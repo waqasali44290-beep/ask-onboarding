@@ -8,12 +8,14 @@ export interface User {
 }
 
 export type DocumentStatus = "processing" | "ready" | "failed";
+export type Visibility = "everyone" | "managers";
 
 export interface DocumentInfo {
   id: number;
   filename: string;
   mime_type: string;
   status: DocumentStatus;
+  visibility: Visibility;
   error: string | null;
   chunk_count: number;
   created_at: string;

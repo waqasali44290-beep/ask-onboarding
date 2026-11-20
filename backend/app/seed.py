@@ -1,4 +1,6 @@
-"""Load every PDF/MD/TXT file from a folder: docker compose exec backend python -m app.seed"""
+"""Load every PDF/MD/TXT file from a folder: docker compose exec backend python -m app.seed
+
+Files inside a folder named "managers" are marked managers-only."""
 import sys
 from pathlib import Path
 
@@ -14,7 +16,8 @@ def seed(folder: Path, force: bool = False) -> None:
             continue
         data = path.read_bytes()
         with SessionLocal() as session:
-            document, needs_ingestion = register_upload(session, path.name, data)
+            visibility = "managers" if "managers" in path.relative_to(folder).parts else "everyone"
+            document, needs_ingestion = register_upload(session, path.name, data, visibility)
         if needs_ingestion or force:
             ingest_document(document.id, path.name, data)
         print(f"{path.relative_to(folder)}: {'indexed' if needs_ingestion or force else 'unchanged'}")

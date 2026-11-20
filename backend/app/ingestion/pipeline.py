@@ -18,7 +18,9 @@ logger = logging.getLogger(__name__)
 Embedder = Callable[[list[str]], list[list[float]]]
 
 
-def register_upload(session: Session, filename: str, data: bytes) -> tuple[Document, bool]:
+def register_upload(
+    session: Session, filename: str, data: bytes, visibility: str = "everyone"
+) -> tuple[Document, bool]:
     """Create or update the document row for an upload.
 
     Returns (document, needs_ingestion). An identical file that is already
@@ -29,11 +31,14 @@ def register_upload(session: Session, filename: str, data: bytes) -> tuple[Docum
     content_hash = hashlib.sha256(data).hexdigest()
 
     document = session.scalar(select(Document).where(Document.filename == filename))
+    if document and document.visibility != visibility:
+        document.visibility = visibility  # takes effect at once; the text itself is unchanged
+        session.commit()
     if document and document.content_hash == content_hash and document.status != "failed":
         return document, False
 
     if document is None:
-        document = Document(filename=filename)
+        document = Document(filename=filename, visibility=visibility)
         session.add(document)
     document.mime_type = mime_type
     document.content_hash = content_hash

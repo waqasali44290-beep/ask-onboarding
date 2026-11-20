@@ -5,7 +5,7 @@ import DocumentList from "../components/DocumentList";
 import FileDropzone from "../components/FileDropzone";
 import { EmptyState, ErrorState, LoadingState } from "../components/States";
 import { useDocuments } from "../hooks/useDocuments";
-import type { DocumentInfo } from "../types";
+import type { DocumentInfo, Visibility } from "../types";
 
 interface UploadResult {
   name: string;
@@ -17,6 +17,7 @@ export default function UploadPage() {
   const [uploading, setUploading] = useState(0);
   const [results, setResults] = useState<UploadResult[]>([]);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [visibility, setVisibility] = useState<Visibility>("everyone");
 
   async function upload(files: File[]) {
     if (files.length === 0) return;
@@ -24,7 +25,7 @@ export default function UploadPage() {
     const outcomes = await Promise.all(
       files.map(async (file) => {
         try {
-          await api.uploadDocument(file);
+          await api.uploadDocument(file, visibility);
           return { name: file.name, error: null };
         } catch (err) {
           return { name: file.name, error: messageOf(err) };
@@ -48,6 +49,16 @@ export default function UploadPage() {
     refresh();
   }
 
+  async function changeVisibility(document: DocumentInfo, newVisibility: Visibility) {
+    try {
+      await api.updateDocument(document.id, newVisibility);
+      setDeleteError(null);
+    } catch (err) {
+      setDeleteError(messageOf(err));
+    }
+    refresh();
+  }
+
   const failedUploads = results.filter((result) => result.error);
 
   return (
@@ -58,6 +69,18 @@ export default function UploadPage() {
         old version.
       </p>
 
+      <div className="upload-options">
+        <label htmlFor="visibility">New uploads are visible to</label>
+        <select
+          id="visibility"
+          className="input select"
+          value={visibility}
+          onChange={(event) => setVisibility(event.target.value as Visibility)}
+        >
+          <option value="everyone">Everyone</option>
+          <option value="managers">Managers only</option>
+        </select>
+      </div>
       <FileDropzone onFiles={upload} />
 
       <div aria-live="polite">
@@ -82,7 +105,7 @@ export default function UploadPage() {
           <p className="muted">Upload a handbook, wiki page or IT guide to get started.</p>
         </EmptyState>
       )}
-      {documents && documents.length > 0 && <DocumentList documents={documents} onDelete={remove} />}
+      {documents && documents.length > 0 && <DocumentList documents={documents} onDelete={remove} onVisibilityChange={changeVisibility} />}
     </section>
   );
 }

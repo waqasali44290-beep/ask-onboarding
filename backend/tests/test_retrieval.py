@@ -3,6 +3,8 @@ from app.ingestion.pipeline import register_upload
 from app.rag.retriever import RetrievedChunk, relevant_chunks, search
 from tests.conftest import fake_embed_query, upload
 
+EVERYONE = ["everyone"]
+
 
 def add_handbook(session_factory):
     upload(session_factory, "pto.md", b"New employees get 25 days of paid time off per year.")
@@ -13,7 +15,7 @@ def add_handbook(session_factory):
 def test_most_relevant_chunk_ranks_first(session_factory):
     add_handbook(session_factory)
     with session_factory() as session:
-        results = search(session, "How do I report a lost laptop?", top_k=3, embed=fake_embed_query)
+        results = search(session, "How do I report a lost laptop?", 3, EVERYONE, embed=fake_embed_query)
 
     assert results[0].filename == "lost-device.txt"
     assert [r.score for r in results] == sorted((r.score for r in results), reverse=True)
@@ -22,7 +24,7 @@ def test_most_relevant_chunk_ranks_first(session_factory):
 def test_results_are_capped_at_top_k(session_factory):
     add_handbook(session_factory)
     with session_factory() as session:
-        assert len(search(session, "laptop", top_k=2, embed=fake_embed_query)) == 2
+        assert len(search(session, "laptop", 2, EVERYONE, embed=fake_embed_query)) == 2
 
 
 def test_document_being_reprocessed_is_not_searched(session_factory):
@@ -31,7 +33,7 @@ def test_document_being_reprocessed_is_not_searched(session_factory):
         # A changed version arrives: old chunks still exist until ingestion finishes...
         register_upload(session, "pto.md", b"New employees get 25 days of paid time off.")
         # ...but they must not be used to answer.
-        assert search(session, "paid time off", top_k=5, embed=fake_embed_query) == []
+        assert search(session, "paid time off", 5, EVERYONE, embed=fake_embed_query) == []
 
 
 def test_relevant_chunks_drops_low_scores():

@@ -27,10 +27,11 @@ A full-stack app where new employees upload company documents (handbook, enginee
 | B5 | Tool call: offer a help-desk ticket, save it, show it on `/tickets` | `backend/app/api/tickets.py`, `TicketsPage.tsx` |
 | B6 | Re-uploading a changed file replaces its old chunks | `backend/app/ingestion/pipeline.py` |
 
-### Stretch goals (chosen)
+### Stretch goals
 
 1. **Evaluation**: 20 test questions with expected answers, plus a script that scores retrieval hit rate and answer quality. Used to compare chunk sizes 400 and 800. Results are reported [below](#evaluation-results).
 2. **Prompt-injection defence**: a sample document contains hidden "ignore previous rules…" text, and the app does not follow it.
+3. **Access control**: documents can be marked *managers only* (admins choose on upload or per document; the seed command marks `sample-docs/managers/`). The filter is part of the retrieval query, so an employee's question can never bring that text to the LLM, however it is phrased. `tests/test_access_control.py` proves it with direct, sneaky and "ignore your rules" questions, and checks that the hidden text never appears in any prompt sent to the model.
 
 ---
 

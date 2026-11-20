@@ -27,7 +27,8 @@ def answer_question(
     session_factory: sessionmaker,
     question: str,
     conversation_id: int | None,
-    user_id: int,
+    user_id: int | None,
+    visibilities: list[str],
     embed: QueryEmbedder,
     llm: StreamChat,
 ) -> Iterator[ChatEvent]:
@@ -44,7 +45,7 @@ def answer_question(
             conversation_id = conversation.id
         session.add(Message(conversation_id=conversation_id, role="user", content=question))
         session.commit()
-        chunks = relevant_chunks(search(session, question, settings.top_k, embed=embed), settings.min_similarity)
+        chunks = relevant_chunks(search(session, question, settings.top_k, visibilities, embed=embed), settings.min_similarity)
 
     # Layer 1: nothing similar enough -> answer "not found" without calling the LLM.
     if not chunks:

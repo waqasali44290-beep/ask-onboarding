@@ -1,20 +1,20 @@
 """Routes: POST /api/documents (upload), GET /api/documents, GET /api/documents/{id}, DELETE /api/documents/{id}."""
 from pathlib import Path
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Response, UploadFile
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.auth import current_user, require_role
+from app.auth import current_user, require_role, visible_to
 from app.config import settings
 from app.db import get_session
 from app.ingestion.parsers import ParseError
 from app.ingestion.pipeline import ingest_document, register_upload
-from app.models import Chunk, Document
-from app.schemas import DocumentDetail, DocumentOut
+from app.models import Chunk, Document, User
+from app.schemas import DocumentDetail, DocumentOut, DocumentUpdate, Visibility
 
 # Reading needs a login; uploading and deleting are admin-only (per route below).
-router = APIRouter(prefix="/api/documents", tags=["documents"], dependencies=[Depends(current_user)])
+router = APIRouter(prefix="/api/documents", tags=["documents"])
 admin_only = [Depends(require_role("admin"))]
 
 
@@ -25,6 +25,7 @@ def upload_document(
     file: UploadFile,
     background_tasks: BackgroundTasks,
     response: Response,
+    visibility: Visibility = Form("everyone"),
     session: Session = Depends(get_session),
 ):
     filename = Path(file.filename or "").name  # drop any folder path the browser sends
@@ -33,7 +34,7 @@ def upload_document(
         raise HTTPException(413, f"File is larger than {settings.max_upload_mb} MB.")
 
     try:
-        document, needs_ingestion = register_upload(session, filename, data)
+        document, needs_ingestion = register_upload(session, filename, data, visibility)
     except ParseError as exc:
         raise HTTPException(400, str(exc)) from exc
 
@@ -45,7 +46,7 @@ def upload_document(
 
 
 @router.get("", response_model=list[DocumentOut])
-def list_documents(session: Session = Depends(get_session)):
+def list_documents(user: User = Depends(current_user), session: Session = Depends(get_session)):
     counts = (
         select(Chunk.document_id, func.count().label("chunk_count"))
         .group_by(Chunk.document_id)
@@ -54,6 +55,7 @@ def list_documents(session: Session = Depends(get_session)):
     rows = session.execute(
         select(Document, func.coalesce(counts.c.chunk_count, 0))
         .outerjoin(counts, counts.c.document_id == Document.id)
+        .where(Document.visibility.in_(visible_to(user)))
         .order_by(Document.updated_at.desc())
     )
     return [
@@ -63,8 +65,16 @@ def list_documents(session: Session = Depends(get_session)):
 
 
 @router.get("/{document_id}", response_model=DocumentDetail)
-def get_document(document_id: int, session: Session = Depends(get_session)):
-    return _with_chunk_count(session, _get_or_404(session, document_id), DocumentDetail)
+def get_document(document_id: int, user: User = Depends(current_user), session: Session = Depends(get_session)):
+    return _with_chunk_count(session, _get_or_404(session, document_id, user), DocumentDetail)
+
+
+@router.patch("/{document_id}", response_model=DocumentOut, dependencies=admin_only)
+def update_document(document_id: int, request: DocumentUpdate, session: Session = Depends(get_session)):
+    document = _get_or_404(session, document_id)
+    document.visibility = request.visibility
+    session.commit()
+    return _with_chunk_count(session, document, DocumentOut)
 
 
 @router.delete("/{document_id}", status_code=204, dependencies=admin_only)
@@ -73,9 +83,10 @@ def delete_document(document_id: int, session: Session = Depends(get_session)):
     session.commit()
 
 
-def _get_or_404(session: Session, document_id: int) -> Document:
+def _get_or_404(session: Session, document_id: int, user: User | None = None) -> Document:
+    """A document the user may not read looks exactly like a missing one."""
     document = session.get(Document, document_id)
-    if document is None:
+    if document is None or (user is not None and document.visibility not in visible_to(user)):
         raise HTTPException(404, "Document not found.")
     return document
 

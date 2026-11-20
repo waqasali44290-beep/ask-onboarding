@@ -7,7 +7,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.auth import current_user
+from app.auth import current_user, visible_to
 from app.db import SessionLocal, get_session
 from app.models import Conversation, Message, User
 from app.rag.answerer import ChatEvent, answer_question
@@ -35,7 +35,7 @@ def chat(
         with session_factory() as session:
             _own_conversation_or_404(session, request.conversation_id, user)
 
-    events = answer_question(session_factory, request.question, request.conversation_id, user.id,
+    events = answer_question(session_factory, request.question, request.conversation_id, user.id, visible_to(user),
                              embed=embed_query, llm=stream_chat)
     return StreamingResponse(
         _server_sent_events(events),
