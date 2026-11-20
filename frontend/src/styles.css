@@ -466,6 +466,20 @@ button.cite:hover { background: var(--accent); color: var(--accent-text); }
 }
 .source-link:hover { border-color: var(--accent); }
 
+.related { display: flex; flex-direction: column; align-items: flex-start; gap: 0.3rem; margin-top: 0.75rem; padding-top: 0.6rem; border-top: 1px solid var(--border); }
+.related-question {
+  font: inherit;
+  font-size: 0.88rem;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--accent);
+  text-align: left;
+  cursor: pointer;
+}
+.related-question:hover { border-color: var(--accent); background: var(--accent-soft); }
+
 .feedback { display: flex; align-items: center; gap: 0.25rem; margin-top: 0.6rem; }
 .feedback-button {
   font-size: 0.95rem;

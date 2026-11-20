@@ -7,6 +7,7 @@ from pathlib import Path
 from app.db import SessionLocal
 from app.ingestion.parsers import MIME_TYPES
 from app.ingestion.pipeline import ingest_document, register_upload
+from app.ingestion.suggestions import suggest_questions
 
 
 def seed(folder: Path, force: bool = False) -> None:
@@ -20,6 +21,8 @@ def seed(folder: Path, force: bool = False) -> None:
             document, needs_ingestion = register_upload(session, path.name, data, visibility)
         if needs_ingestion or force:
             ingest_document(document.id, path.name, data)
+        if needs_ingestion or force or not document.suggested_questions:
+            suggest_questions(document.id)  # one LLM call per document, ~20 s on CPU
         print(f"{path.relative_to(folder)}: {'indexed' if needs_ingestion or force else 'unchanged'}")
 
 

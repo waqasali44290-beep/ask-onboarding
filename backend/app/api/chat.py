@@ -1,15 +1,16 @@
 """Routes: POST /api/chat (Server-Sent Events stream of tokens + citations), GET /api/conversations/{id}."""
 import json
+import random
 from collections.abc import Iterator
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.auth import current_user, visible_to
 from app.db import SessionLocal, get_session
-from app.models import Conversation, Message, User
+from app.models import Conversation, Document, Message, User
 from app.rag.answerer import ChatEvent, answer_question
 from app.rag.embeddings import embed_query
 from app.rag.llm import stream_chat
@@ -42,6 +43,22 @@ def chat(
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache"},
     )
+
+
+@router.get("/suggestions", response_model=list[str])
+def suggestions(
+    limit: int = Query(3, ge=1, le=10),
+    user: User = Depends(current_user),
+    session: Session = Depends(get_session),
+):
+    """Random suggested questions from documents this user may read (welcome screen)."""
+    per_document = session.scalars(
+        select(Document.suggested_questions).where(
+            Document.status == "ready", Document.visibility.in_(visible_to(user))
+        )
+    ).all()
+    questions = [question for document_questions in per_document for question in document_questions]
+    return random.sample(questions, min(limit, len(questions)))
 
 
 @router.get("/conversations", response_model=list[ConversationSummary])

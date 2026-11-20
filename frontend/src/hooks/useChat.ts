@@ -36,6 +36,7 @@ function fromStored(message: StoredMessage): ChatMessage {
     offerTicket: false,
     messageId: message.id,
     feedback: message.feedback,
+    suggestions: [],
   };
 }
 
@@ -89,8 +90,8 @@ export function useChat() {
     const answerKey = newKey();
     setMessages((previous) => [
       ...previous,
-      { key: newKey(), role: "user", content: question, sources: [], citations: [], status: "done", offerTicket: false, messageId: null, feedback: null },
-      { key: answerKey, role: "assistant", content: "", sources: [], citations: [], status: "searching", offerTicket: false, messageId: null, feedback: null },
+      { key: newKey(), role: "user", content: question, sources: [], citations: [], status: "done", offerTicket: false, messageId: null, feedback: null, suggestions: [] },
+      { key: answerKey, role: "assistant", content: "", sources: [], citations: [], status: "searching", offerTicket: false, messageId: null, feedback: null, suggestions: [] },
     ]);
 
     await streamChat(question, conversationId, {
@@ -104,6 +105,7 @@ export function useChat() {
           citations: done.citations,
           status: done.no_answer ? "no_answer" : "done",
           messageId: done.message_id,
+          suggestions: done.suggestions,
         }));
       },
       onError: (message) => update(answerKey, () => ({ content: message, status: "error" })),

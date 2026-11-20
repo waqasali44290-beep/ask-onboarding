@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.config import settings
-from app.models import Conversation, Message
+from app.models import Conversation, Document, Message
 from app.rag.llm import LLMError, StreamChat
 from app.rag.prompts import NO_ANSWER_MESSAGE, NOT_FOUND_MARKER, SYSTEM_PROMPT, build_user_message
 from app.rag.retriever import QueryEmbedder, RetrievedChunk, relevant_chunks, search
@@ -96,7 +96,8 @@ def answer_question(
         session.add(message)
         session.commit()
         yield ChatEvent("done", {"conversation_id": conversation_id, "message_id": message.id,
-                                 "citations": citations, "no_answer": False})
+                                 "citations": citations, "no_answer": False,
+                                 "suggestions": _related_questions(session, question, citations, sources)})
 
 
 def _previous_exchange(session: Session, conversation_id: int, before_id: int) -> tuple[str, str] | None:
@@ -134,6 +135,19 @@ def _retrieve(
     return relevant_chunks(ranked, settings.min_similarity)
 
 
+def _related_questions(session: Session, question: str, citations: list[dict], sources: list[dict]) -> list[str]:
+    """Up to 3 suggested questions from the cited documents first, then the other sources.
+    Sources were already filtered by the user's access, so suggestions are too."""
+    document_ids = list(dict.fromkeys(item["document_id"] for item in citations + sources))
+    documents = {d.id: d for d in session.scalars(select(Document).where(Document.id.in_(document_ids)))}
+    related: list[str] = []
+    for document_id in document_ids:
+        for suggestion in documents[document_id].suggested_questions if document_id in documents else []:
+            if suggestion.lower() != question.lower() and suggestion not in related:
+                related.append(suggestion)
+    return related[:3]
+
+
 def _cited_sources(answer: str, sources: list[dict]) -> list[dict]:
     """Only the sources the answer refers to with [n]; numbers the model made up are ignored."""
     cited_numbers = {int(number) for number in re.findall(r"\[(\d+)\]", answer)}
@@ -160,4 +174,4 @@ def _no_answer(session_factory: sessionmaker, conversation_id: int, metrics: dic
         session.commit()
     yield ChatEvent("no_answer", {"message": NO_ANSWER_MESSAGE, "offer_ticket": True})
     yield ChatEvent("done", {"conversation_id": conversation_id, "message_id": message.id,
-                             "citations": [], "no_answer": True})
+                             "citations": [], "no_answer": True, "suggestions": []})

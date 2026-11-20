@@ -91,3 +91,6 @@ ALTER TABLE messages ADD COLUMN IF NOT EXISTS feedback SMALLINT CHECK (feedback 
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS latency_ms INT;
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS prompt_tokens INT;
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS completion_tokens INT;
+
+-- Suggested questions: written once per document by the LLM after ingestion.
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS suggested_questions JSONB NOT NULL DEFAULT '[]';

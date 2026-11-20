@@ -8,9 +8,10 @@ interface Props {
   conversationId: number | null;
   onCite: (source: Source) => void;
   onRetry: (question: string) => void;
+  onAsk: (question: string) => void;
 }
 
-export default function MessageList({ messages, conversationId, onCite, onRetry }: Props) {
+export default function MessageList({ messages, conversationId, onCite, onRetry, onAsk }: Props) {
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -29,6 +30,8 @@ export default function MessageList({ messages, conversationId, onCite, onRetry 
               conversationId={conversationId}
               onCite={onCite}
               onRetry={onRetry}
+              onAsk={onAsk}
+              isLast={index === messages.length - 1}
             />
           </li>
         ))}

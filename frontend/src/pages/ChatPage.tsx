@@ -1,5 +1,5 @@
 // Chat page: conversation sidebar, history, streaming answer, citations, ticket offer.
-import { useState, type FormEvent, type KeyboardEvent } from "react";
+import { useEffect, useState, type FormEvent, type KeyboardEvent } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import CitationPanel from "../components/CitationPanel";
@@ -12,7 +12,8 @@ import { useConversations } from "../hooks/useConversations";
 import { useDocuments } from "../hooks/useDocuments";
 import type { ConversationSummary, Source } from "../types";
 
-const EXAMPLE_QUESTIONS = [
+// Shown until documents have suggested questions of their own.
+const FALLBACK_QUESTIONS = [
   "How many vacation days do new employees get?",
   "What should I do if my laptop is stolen?",
   "How do I get access to Jira from home?",
@@ -24,6 +25,14 @@ export default function ChatPage() {
   const { documents } = useDocuments();
   const [draft, setDraft] = useState("");
   const [openSource, setOpenSource] = useState<Source | null>(null);
+  const [examples, setExamples] = useState<string[]>(FALLBACK_QUESTIONS);
+
+  useEffect(() => {
+    api
+      .suggestions()
+      .then((questions) => questions.length > 0 && setExamples(questions))
+      .catch(() => {}); // keep the fallback questions
+  }, []);
 
   const hasReadyDocuments = documents?.some((document) => document.status === "ready") ?? true;
 
@@ -88,7 +97,7 @@ export default function ChatPage() {
               <p className="muted">I answer from the company handbook, engineering wiki and IT guides — with sources.</p>
               {hasReadyDocuments ? (
                 <div className="examples">
-                  {EXAMPLE_QUESTIONS.map((question) => (
+                  {examples.map((question) => (
                     <button key={question} type="button" className="example" onClick={() => ask(question)}>
                       {question}
                     </button>
@@ -103,7 +112,7 @@ export default function ChatPage() {
               )}
             </div>
           )}
-          <MessageList messages={messages} conversationId={conversationId} onCite={setOpenSource} onRetry={ask} />
+          <MessageList messages={messages} conversationId={conversationId} onCite={setOpenSource} onRetry={ask} onAsk={ask} />
         </div>
 
         {/* Screen readers hear one short update instead of every streamed word. */}

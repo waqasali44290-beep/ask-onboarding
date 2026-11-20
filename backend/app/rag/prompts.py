@@ -27,6 +27,10 @@ TICKET_DRAFT_PROMPT = """Rewrite the employee's question as a short, clear help-
 One sentence, at most 15 words. No quotes, no greeting. Reply with the title only."""
 
 
+SUGGEST_QUESTIONS_PROMPT = """Write 3 short questions a new employee might ask that the document below answers.
+One question per line. No numbering, no extra text."""
+
+
 def build_user_message(
     question: str, chunks: list[RetrievedChunk], previous: tuple[str, str] | None = None
 ) -> str:

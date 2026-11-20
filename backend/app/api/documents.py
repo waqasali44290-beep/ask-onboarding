@@ -10,6 +10,7 @@ from app.config import settings
 from app.db import get_session
 from app.ingestion.parsers import ParseError
 from app.ingestion.pipeline import ingest_document, register_upload
+from app.ingestion.suggestions import suggest_questions
 from app.models import Chunk, Document, User
 from app.schemas import DocumentDetail, DocumentOut, DocumentUpdate, Visibility
 
@@ -40,6 +41,7 @@ def upload_document(
 
     if needs_ingestion:
         background_tasks.add_task(ingest_document, document.id, filename, data)
+        background_tasks.add_task(suggest_questions, document.id)  # runs after ingestion finishes
     else:
         response.status_code = 200  # same file already indexed, nothing to do
     return _with_chunk_count(session, document, DocumentOut)

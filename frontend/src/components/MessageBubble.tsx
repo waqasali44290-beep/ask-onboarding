@@ -11,9 +11,11 @@ interface Props {
   conversationId: number | null;
   onCite: (source: Source) => void;
   onRetry: (question: string) => void;
+  onAsk: (question: string) => void;
+  isLast: boolean; // related questions only under the newest answer
 }
 
-export default function MessageBubble({ message, question, conversationId, onCite, onRetry }: Props) {
+export default function MessageBubble({ message, question, conversationId, onCite, onRetry, onAsk, isLast }: Props) {
   if (message.role === "user") {
     return <div className="bubble bubble-user">{message.content}</div>;
   }
@@ -48,6 +50,16 @@ export default function MessageBubble({ message, question, conversationId, onCit
           )}
           {message.status === "done" && message.messageId !== null && (
             <FeedbackButtons messageId={message.messageId} initial={message.feedback} />
+          )}
+          {isLast && message.suggestions.length > 0 && (
+            <div className="related">
+              <p className="sources-title">Related questions</p>
+              {message.suggestions.map((suggestion) => (
+                <button key={suggestion} type="button" className="related-question" onClick={() => onAsk(suggestion)}>
+                  {suggestion}
+                </button>
+              ))}
+            </div>
           )}
         </div>
       );

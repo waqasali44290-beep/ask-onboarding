@@ -67,6 +67,7 @@ export const api = {
   deleteDocument: (id: number) => request<void>(`/documents/${id}`, { method: "DELETE" }),
   updateDocument: (id: number, visibility: Visibility) =>
     request<DocumentInfo>(`/documents/${id}`, { ...json({ visibility }), method: "PATCH" }),
+  suggestions: () => request<string[]>("/suggestions"),
   listConversations: () => request<ConversationSummary[]>("/conversations"),
   getConversation: (id: number) => request<Conversation>(`/conversations/${id}`),
   deleteConversation: (id: number) => request<void>(`/conversations/${id}`, { method: "DELETE" }),

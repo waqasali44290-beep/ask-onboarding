@@ -24,6 +24,7 @@ class Document(Base):
     visibility: Mapped[str] = mapped_column(Text, default="everyone")  # everyone | managers
     error: Mapped[str | None] = mapped_column(Text)
     full_text: Mapped[str | None] = mapped_column(Text)
+    suggested_questions: Mapped[list[str]] = mapped_column(JSONB, default=list)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
 

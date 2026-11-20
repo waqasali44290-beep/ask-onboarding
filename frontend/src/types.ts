@@ -90,6 +90,7 @@ export interface DoneEvent {
   message_id: number;
   citations: Source[];
   no_answer: boolean;
+  suggestions: string[];
 }
 
 // A message as the chat page shows it, including answers still streaming.
@@ -105,6 +106,7 @@ export interface ChatMessage {
   offerTicket: boolean; // only for live no-answer replies, not ones loaded from history
   messageId: number | null; // database id, known once the answer is saved
   feedback: Rating | null;
+  suggestions: string[]; // related questions shown under the answer
 }
 
 export type TicketStatus = "open" | "in_progress" | "resolved";
