@@ -15,11 +15,13 @@ from app.models import User, UserSession
 SESSION_COOKIE = "session"
 PASSWORD_ITERATIONS = 200_000  # slow on purpose: makes guessing stolen hashes expensive
 
-# Demo accounts created on first start (password: settings.demo_password).
+# Demo accounts created on first start (password: settings.demo_password):
+# (username, name, role, username of their manager)
 DEMO_USERS = [
-    ("employee", "Sara Khan", "employee"),
-    ("manager", "Omar Malik", "manager"),
-    ("admin", "Help Desk Admin", "admin"),
+    ("admin", "Help Desk Admin", "admin", None),
+    ("manager", "Omar Malik", "manager", None),
+    ("employee", "Sara Khan", "employee", "manager"),
+    ("employee2", "Ali Raza", "employee", "manager"),
 ]
 
 
@@ -57,7 +59,8 @@ def current_user(
         user = session.scalar(
             select(User)
             .join(UserSession, UserSession.user_id == User.id)
-            .where(UserSession.token_hash == token_hash(token), UserSession.expires_at > func.now())
+            .where(UserSession.token_hash == token_hash(token), UserSession.expires_at > func.now(),
+                   User.is_active)
         )
         if user:
             return user
@@ -82,8 +85,11 @@ def visible_to(user: User) -> list[str]:
 
 
 def ensure_demo_users(session: Session) -> None:
-    for username, display_name, role in DEMO_USERS:
+    for username, display_name, role, manager_username in DEMO_USERS:
         if session.scalar(select(User).where(User.username == username)) is None:
+            manager = session.scalar(select(User).where(User.username == manager_username)) if manager_username else None
             session.add(User(username=username, display_name=display_name, role=role,
+                             manager_id=manager.id if manager else None,
                              password_hash=hash_password(settings.demo_password)))
+            session.flush()  # so the next demo user can find this one as their manager
     session.commit()

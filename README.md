@@ -37,7 +37,7 @@ A full-stack app where new employees upload company documents (handbook, enginee
 
 ### Extra features
 
-- **Login with roles**: employee, manager and admin (demo accounts below). Conversations are private.
+- **Login with roles and teams**: employee, manager and admin. Admins manage users on the **Users** page: add users, change roles, set who reports to whom, reset passwords, deactivate. Managers see their team's tickets; employees only their own. Conversations are private.
 - **Ticket management**: employees see their tickets, the help-desk reply and can mark them solved; admins filter by status, reply and resolve. The assistant drafts the ticket title, so opening one is a single click.
 - **Conversation sidebar**: reopen or delete past chats; follow-up questions ("can I carry them over?") use the previous question.
 - **Feedback and admin page**: thumbs up/down on answers; the admin page shows answers, no-answer rate, latency, tokens, cost and ratings.
@@ -145,11 +145,12 @@ The first start downloads the LLM (`qwen2.5:3b`, about 1.9 GB) and the embedding
 
 ### Demo accounts
 
-| Username | Password | Can do |
-|---|---|---|
-| `employee` | `onboarding` | Chat, open tickets, see own tickets |
-| `manager` | `onboarding` | Same as employee |
-| `admin` | `onboarding` | Everything, plus manage documents and all tickets |
+| Username | Password | Who | Can do |
+|---|---|---|---|
+| `employee` | `onboarding` | Sara Khan, reports to Omar | Chat, open tickets, see own tickets |
+| `employee2` | `onboarding` | Ali Raza, reports to Omar | Same as employee |
+| `manager` | `onboarding` | Omar Malik | Own tickets plus the team's (read-only), managers-only documents |
+| `admin` | `onboarding` | Help Desk Admin | Everything: all tickets, documents, users and reporting lines, admin stats |
 
 They are created on first start. Set `DEMO_PASSWORD` in `.env` to change the password.
 

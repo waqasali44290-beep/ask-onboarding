@@ -103,6 +103,8 @@ class User(Base):
     display_name: Mapped[str] = mapped_column(Text)
     password_hash: Mapped[str] = mapped_column(Text)
     role: Mapped[str] = mapped_column(Text)  # employee | manager | admin
+    manager_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    is_active: Mapped[bool] = mapped_column(default=True)  # deactivated users can't log in
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
 

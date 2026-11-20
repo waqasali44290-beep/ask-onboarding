@@ -45,6 +45,13 @@ export const ChartIcon = () => (
   </Icon>
 );
 
+export const UsersIcon = () => (
+  <Icon>
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+    <circle cx="9" cy="7" r="4" />
+  </Icon>
+);
+
 export const PlusIcon = () => (
   <Icon>
     <path d="M12 5v14M5 12h14" />

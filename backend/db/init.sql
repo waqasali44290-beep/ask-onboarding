@@ -94,3 +94,7 @@ ALTER TABLE messages ADD COLUMN IF NOT EXISTS completion_tokens INT;
 
 -- Suggested questions: written once per document by the LLM after ingestion.
 ALTER TABLE documents ADD COLUMN IF NOT EXISTS suggested_questions JSONB NOT NULL DEFAULT '[]';
+
+-- Reporting lines (who manages whom) and deactivated accounts.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS manager_id INT REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE;

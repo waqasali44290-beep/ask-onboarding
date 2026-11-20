@@ -1,12 +1,13 @@
 """Routes: draft, create, list and update help-desk tickets.
 
-Employees and managers see and close their own tickets; admins see all of
-them, change their status and write the help desk's reply.
+Who sees what: employees see their own tickets, managers also see their
+team's (read-only), admins see all. Owners can close their own ticket;
+only admins reply and change the status.
 """
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.auth import current_user
@@ -62,7 +63,10 @@ def list_tickets(
     session: Session = Depends(get_session),
 ):
     query = select(Ticket).order_by(Ticket.id.desc())
-    if user.role != "admin":
+    if user.role == "manager":
+        team = select(User.id).where(User.manager_id == user.id)
+        query = query.where(or_(Ticket.user_id == user.id, Ticket.user_id.in_(team)))
+    elif user.role != "admin":
         query = query.where(Ticket.user_id == user.id)
     if status:
         query = query.where(Ticket.status == status)

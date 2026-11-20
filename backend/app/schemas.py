@@ -76,6 +76,8 @@ class ConversationOut(BaseModel):
 
 Visibility = Literal["everyone", "managers"]
 
+Role = Literal["employee", "manager", "admin"]
+
 TicketStatus = Literal["open", "in_progress", "resolved"]
 
 
@@ -92,6 +94,7 @@ class TicketOut(BaseModel):
     id: int
     title: str
     question: str
+    user_id: int | None
     user_name: str
     conversation_id: int | None
     status: TicketStatus
@@ -169,3 +172,31 @@ class AdminStats(BaseModel):
     thumbs_down: int
     tickets: dict[str, int]  # status -> count
     recent: list[AnswerLog]
+
+
+Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
+Password = Annotated[str, StringConstraints(min_length=8, max_length=200)]
+
+
+class UserAdminOut(UserOut):
+    manager_id: int | None
+    manager_name: str | None = None
+    team_size: int = 0
+    is_active: bool
+
+
+class UserCreate(BaseModel):
+    username: Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=50, pattern=r"^[A-Za-z0-9._-]+$")]
+    display_name: Name
+    role: Role
+    password: Password
+    manager_id: int | None = None
+
+
+class UserUpdate(BaseModel):
+    """Every field is optional: only the ones sent are changed (manager_id: null removes the manager)."""
+    display_name: Name | None = None
+    role: Role | None = None
+    manager_id: int | None = None
+    password: Password | None = None
+    is_active: bool | None = None

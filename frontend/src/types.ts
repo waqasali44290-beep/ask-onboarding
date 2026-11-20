@@ -1,11 +1,33 @@
 // Shared TypeScript types matching the backend schemas (backend/app/schemas.py).
 
+export type Role = "employee" | "manager" | "admin";
+
 export interface User {
   id: number;
   username: string;
   display_name: string;
-  role: "employee" | "manager" | "admin";
+  role: Role;
 }
+
+export interface UserAdmin extends User {
+  manager_id: number | null;
+  manager_name: string | null;
+  team_size: number;
+  is_active: boolean;
+}
+
+export interface NewUser {
+  username: string;
+  display_name: string;
+  role: Role;
+  password: string;
+  manager_id: number | null;
+}
+
+// Only the fields being changed are sent.
+export type UserChange = Partial<Pick<UserAdmin, "display_name" | "role" | "manager_id" | "is_active">> & {
+  password?: string;
+};
 
 export type DocumentStatus = "processing" | "ready" | "failed";
 export type Visibility = "everyone" | "managers";
@@ -115,6 +137,7 @@ export interface Ticket {
   id: number;
   title: string;
   question: string;
+  user_id: number | null;
   user_name: string;
   conversation_id: number | null;
   status: TicketStatus;

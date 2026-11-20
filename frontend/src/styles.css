@@ -338,6 +338,14 @@ main { max-width: 1180px; margin: 0 auto; padding: 1.5rem 1.25rem; }
 .ticket-waiting { margin: 0; font-size: 0.9rem; }
 .ticket-admin { display: flex; flex-direction: column; gap: 0.45rem; }
 .select { width: auto; }
+.segmented { display: inline-flex; margin-top: 1rem; padding: 3px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); }
+.segmented button { font: inherit; font-size: 0.88rem; padding: 0.3rem 0.8rem; border: none; border-radius: 7px; background: none; color: var(--muted); cursor: pointer; }
+.segmented .segmented-active { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+.add-user { margin: 1rem 0; }
+.user-form { margin: 1rem 0; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: 0.75rem; }
+.form-grid label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.82rem; font-weight: 600; color: var(--muted); }
+.row-inactive td { opacity: 0.55; }
 .select-small { padding: 0.25rem 0.5rem; font-size: 0.85rem; }
 .upload-options { display: flex; align-items: center; gap: 0.6rem; margin-top: 1.25rem; font-size: 0.9rem; color: var(--muted); }
 

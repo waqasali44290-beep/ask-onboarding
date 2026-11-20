@@ -1,4 +1,5 @@
 // Tickets page. Employees: their own tickets, the help desk's reply, "mark as solved".
+// Managers: the same for their own tickets, plus their team's tickets (read-only).
 // Admins: every ticket, filter by status, change status and write a reply.
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -9,10 +10,13 @@ import type { Ticket, TicketStatus } from "../types";
 
 const STATUS_LABELS: Record<TicketStatus, string> = { open: "Open", in_progress: "In progress", resolved: "Resolved" };
 const FILTERS: (TicketStatus | "all")[] = ["all", "open", "in_progress", "resolved"];
+type Owner = "all" | "mine" | "team";
 
 export default function TicketsPage() {
   const user = useUser();
   const isAdmin = user.role === "admin";
+  const isManager = user.role === "manager";
+  const [owner, setOwner] = useState<Owner>("all");
   const [tickets, setTickets] = useState<Ticket[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<TicketStatus | "all">(isAdmin ? "open" : "all");
@@ -34,18 +38,39 @@ export default function TicketsPage() {
     setTickets((current) => current?.map((ticket) => (ticket.id === updated.id ? updated : ticket)) ?? null);
   }
 
+  const ownerMatches = (ticket: Ticket) =>
+    owner === "all" || (owner === "mine") === (ticket.user_id === user.id);
+  const visible = tickets?.filter(ownerMatches) ?? [];
   const count = (status: TicketStatus | "all") =>
-    tickets?.filter((ticket) => status === "all" || ticket.status === status).length ?? 0;
-  const shown = tickets?.filter((ticket) => filter === "all" || ticket.status === filter) ?? [];
+    visible.filter((ticket) => status === "all" || ticket.status === status).length;
+  const shown = visible.filter((ticket) => filter === "all" || ticket.status === filter);
 
   return (
     <section className="page">
-      <h1>{isAdmin ? "Help-desk tickets" : "My tickets"}</h1>
+      <h1>{isAdmin ? "Help-desk tickets" : isManager ? "Team tickets" : "My tickets"}</h1>
       <p className="muted">
         {isAdmin
           ? "Questions employees couldn't answer from the documents. Reply, then mark them resolved."
-          : "Questions you sent to the help desk. Their reply appears here."}
+          : isManager
+            ? "Your tickets and your team's. The help desk replies here."
+            : "Questions you sent to the help desk. Their reply appears here."}
       </p>
+
+      {isManager && tickets && tickets.length > 0 && (
+        <div className="segmented" role="group" aria-label="Whose tickets">
+          {(["all", "mine", "team"] as Owner[]).map((value) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={owner === value}
+              className={owner === value ? "segmented-active" : undefined}
+              onClick={() => setOwner(value)}
+            >
+              {value === "all" ? "Everyone" : value === "mine" ? "Mine" : "My team"}
+            </button>
+          ))}
+        </div>
+      )}
 
       {tickets && tickets.length > 0 && (
         <div className="tabs" role="tablist" aria-label="Filter by status">
@@ -78,7 +103,7 @@ export default function TicketsPage() {
       <ul className="ticket-list">
         {shown.map((ticket) => (
           <li key={ticket.id}>
-            <TicketCard ticket={ticket} isAdmin={isAdmin} onChange={replace} />
+            <TicketCard ticket={ticket} isAdmin={isAdmin} isOwn={ticket.user_id === user.id} onChange={replace} />
           </li>
         ))}
       </ul>
@@ -86,7 +111,14 @@ export default function TicketsPage() {
   );
 }
 
-function TicketCard({ ticket, isAdmin, onChange }: { ticket: Ticket; isAdmin: boolean; onChange: (t: Ticket) => void }) {
+interface CardProps {
+  ticket: Ticket;
+  isAdmin: boolean;
+  isOwn: boolean; // a manager viewing a team member's ticket can only read it
+  onChange: (t: Ticket) => void;
+}
+
+function TicketCard({ ticket, isAdmin, isOwn, onChange }: CardProps) {
   const [status, setStatus] = useState<TicketStatus>(ticket.status);
   const [response, setResponse] = useState(ticket.response ?? "");
   const [saving, setSaving] = useState(false);
@@ -114,7 +146,7 @@ function TicketCard({ ticket, isAdmin, onChange }: { ticket: Ticket; isAdmin: bo
             <span className="muted">#{ticket.id}</span> {ticket.title}
           </h2>
           <p className="muted ticket-meta">
-            {isAdmin && <>{ticket.user_name} · </>}
+            {!isOwn && <>{ticket.user_name} · </>}
             opened {new Date(ticket.created_at).toLocaleString()}
             {ticket.resolved_at && <> · resolved {new Date(ticket.resolved_at).toLocaleString()}</>}
           </p>
@@ -170,7 +202,7 @@ function TicketCard({ ticket, isAdmin, onChange }: { ticket: Ticket; isAdmin: bo
           ) : (
             <p className="muted ticket-waiting">Waiting for the help desk to reply.</p>
           )}
-          {ticket.status !== "resolved" && (
+          {isOwn && ticket.status !== "resolved" && (
             <button type="button" className="button" disabled={saving} onClick={() => save({ status: "resolved" })}>
               {saving ? "Saving…" : "Mark as solved"}
             </button>

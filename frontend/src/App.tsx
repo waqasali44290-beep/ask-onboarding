@@ -1,14 +1,16 @@
 import { NavLink, Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./auth";
-import { ChartIcon, ChatIcon, FileIcon, TicketIcon } from "./components/Icons";
+import { ChartIcon, ChatIcon, FileIcon, TicketIcon, UsersIcon } from "./components/Icons";
 import { LoadingState } from "./components/States";
 import AdminPage from "./pages/AdminPage";
 import ChatPage from "./pages/ChatPage";
 import LoginPage from "./pages/LoginPage";
 import TicketsPage from "./pages/TicketsPage";
 import UploadPage from "./pages/UploadPage";
+import UsersPage from "./pages/UsersPage";
 
 const ROLE_LABELS: Record<string, string> = { employee: "Employee", manager: "Manager", admin: "Admin" };
+const TICKETS_LABEL: Record<string, string> = { employee: "My tickets", manager: "Team tickets", admin: "Tickets" };
 
 export default function App() {
   const { user, checking, logout } = useAuth();
@@ -35,11 +37,16 @@ export default function App() {
           </NavLink>
         )}
         <NavLink to="/tickets">
-          <TicketIcon /> {isAdmin ? "Tickets" : "My tickets"}
+          <TicketIcon /> {TICKETS_LABEL[user.role]}
         </NavLink>
         {isAdmin && (
           <NavLink to="/admin">
             <ChartIcon /> Admin
+          </NavLink>
+        )}
+        {isAdmin && (
+          <NavLink to="/users">
+            <UsersIcon /> Users
           </NavLink>
         )}
         <span className="user-chip">
@@ -56,6 +63,7 @@ export default function App() {
           <Route path="/chat" element={<ChatPage />} />
           {isAdmin && <Route path="/upload" element={<UploadPage />} />}
           {isAdmin && <Route path="/admin" element={<AdminPage />} />}
+          {isAdmin && <Route path="/users" element={<UsersPage />} />}
           <Route path="/tickets" element={<TicketsPage />} />
           <Route path="*" element={<Navigate to="/chat" replace />} />
         </Routes>

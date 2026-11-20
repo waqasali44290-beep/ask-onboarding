@@ -16,7 +16,7 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 def login(request: LoginRequest, response: Response, session: Session = Depends(get_session)):
     user = session.scalar(select(User).where(User.username == request.username.lower()))
     # Same message for unknown user and wrong password, so usernames can't be probed.
-    if user is None or not verify_password(request.password, user.password_hash):
+    if user is None or not user.is_active or not verify_password(request.password, user.password_hash):
         raise HTTPException(401, "Wrong username or password.")
     response.set_cookie(
         SESSION_COOKIE,
