@@ -1,6 +1,8 @@
 // Renders the conversation history and keeps the newest message in view.
 import { useEffect, useRef } from "react";
+import { useUser } from "../auth";
 import type { ChatMessage, Source } from "../types";
+import Avatar from "./Avatar";
 import MessageBubble from "./MessageBubble";
 
 interface Props {
@@ -12,6 +14,7 @@ interface Props {
 }
 
 export default function MessageList({ messages, conversationId, onCite, onRetry, onAsk }: Props) {
+  const user = useUser();
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -23,6 +26,7 @@ export default function MessageList({ messages, conversationId, onCite, onRetry,
       <ol className="messages">
         {messages.map((message, index) => (
           <li key={message.key} className={`message message-${message.role}`}>
+            <Avatar name={user.display_name} assistant={message.role === "assistant"} />
             <MessageBubble
               message={message}
               // Assistant messages always follow the user question they answer.

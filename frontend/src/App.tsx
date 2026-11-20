@@ -1,6 +1,7 @@
 import { NavLink, Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./auth";
 import { ChartIcon, ChatIcon, FileIcon, TicketIcon, UsersIcon } from "./components/Icons";
+import Avatar from "./components/Avatar";
 import { LoadingState } from "./components/States";
 import AdminPage from "./pages/AdminPage";
 import ChatPage from "./pages/ChatPage";
@@ -50,8 +51,11 @@ export default function App() {
           </NavLink>
         )}
         <span className="user-chip">
-          <span className="user-name">{user.display_name}</span>
-          <span className="user-role">{ROLE_LABELS[user.role] ?? user.role}</span>
+          <Avatar name={user.display_name} />
+          <span className="user-text">
+            <span className="user-name">{user.display_name}</span>
+            <span className={`user-role role-${user.role}`}>{ROLE_LABELS[user.role] ?? user.role}</span>
+          </span>
         </span>
         <button type="button" className="button button-quiet" onClick={logout}>
           Sign out
