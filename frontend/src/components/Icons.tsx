@@ -58,6 +58,13 @@ export const FlagIcon = () => (
   </Icon>
 );
 
+export const MicIcon = () => (
+  <Icon>
+    <rect x="9" y="2" width="6" height="12" rx="3" />
+    <path d="M5 10a7 7 0 0 0 14 0M12 17v5M8 22h8" />
+  </Icon>
+);
+
 export const PlusIcon = () => (
   <Icon>
     <path d="M12 5v14M5 12h14" />

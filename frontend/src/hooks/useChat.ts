@@ -37,6 +37,7 @@ function fromStored(message: StoredMessage): ChatMessage {
     messageId: message.id,
     feedback: message.feedback,
     suggestions: [],
+    spoken: false,
   };
 }
 
@@ -93,12 +94,12 @@ export function useChat() {
     setMessages((previous) => previous.map((m) => (m.key === key ? { ...m, ...change(m) } : m)));
   }
 
-  async function send(question: string) {
+  async function send(question: string, spoken = false) {
     const answerKey = newKey();
     setMessages((previous) => [
       ...previous,
-      { key: newKey(), role: "user", content: question, sources: [], citations: [], status: "done", offerTicket: false, messageId: null, feedback: null, suggestions: [] },
-      { key: answerKey, role: "assistant", content: "", sources: [], citations: [], status: "searching", offerTicket: false, messageId: null, feedback: null, suggestions: [] },
+      { key: newKey(), role: "user", content: question, sources: [], citations: [], status: "done", offerTicket: false, messageId: null, feedback: null, suggestions: [], spoken },
+      { key: answerKey, role: "assistant", content: "", sources: [], citations: [], status: "searching", offerTicket: false, messageId: null, feedback: null, suggestions: [], spoken },
     ]);
 
     await streamChat(question, currentId.current, {

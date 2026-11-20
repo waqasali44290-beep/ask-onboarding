@@ -41,6 +41,7 @@ A full-stack app where new employees upload company documents (handbook, enginee
 - **Ticket management**: employees see their tickets, the help-desk reply and can mark them solved; admins filter by status, reply and resolve. The assistant drafts the ticket title, so opening one is a single click.
 - **Conversation sidebar**: reopen or delete past chats; follow-up questions ("can I carry them over?") use the previous question.
 - **Feedback and admin page**: thumbs up/down on answers; the admin page shows answers, no-answer rate, latency, tokens, cost and ratings.
+- **Voice**: ask with the mic button (words appear as you speak, sent when you stop) and hear answers read aloud; voice questions are answered by voice automatically. Uses the browser Web Speech API: Chrome, Edge or Safari (in Chrome the audio is transcribed by Google).
 - **Suggested questions**: written per document at ingestion, shown under answers and on the welcome screen.
 
 ## Tech stack

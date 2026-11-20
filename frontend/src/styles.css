@@ -853,3 +853,26 @@ h1 { background: var(--gradient); -webkit-background-clip: text; background-clip
   .badges { justify-content: center; }
   .task { flex-wrap: wrap; }
 }
+
+/* Voice */
+.mic-button {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border: none;
+  border-radius: 10px;
+  background: var(--gradient-soft);
+  color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.mic-button:hover:not(:disabled) { background: var(--accent-soft); }
+.mic-button:disabled { opacity: 0.45; cursor: not-allowed; }
+.mic-listening { background: #f43f5e; color: #fff; animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(244 63 94 / 0.5); }
+  50% { box-shadow: 0 0 0 8px rgb(244 63 94 / 0); }
+}
+@media (prefers-reduced-motion: reduce) { .mic-listening { animation: none; } }
+.speak-button { filter: none; opacity: 0.8; }

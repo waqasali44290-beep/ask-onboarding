@@ -4,12 +4,13 @@ import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
 import CitationPanel from "../components/CitationPanel";
 import ConversationSidebar from "../components/ConversationSidebar";
-import { SendIcon } from "../components/Icons";
+import { MicIcon, SendIcon } from "../components/Icons";
 import MessageList from "../components/MessageList";
 import { EmptyState, ErrorState, LoadingState } from "../components/States";
 import { useChat } from "../hooks/useChat";
 import { useConversations } from "../hooks/useConversations";
 import { useDocuments } from "../hooks/useDocuments";
+import { useSpeechInput } from "../hooks/useSpeech";
 import type { ConversationSummary, Source } from "../types";
 
 // Shown until documents have suggested questions of their own.
@@ -37,12 +38,15 @@ export default function ChatPage() {
 
   const hasReadyDocuments = documents?.some((document) => document.status === "ready") ?? true;
 
-  function ask(question: string) {
+  function ask(question: string, spoken = false) {
     const trimmed = question.trim();
     if (!trimmed || busy) return;
     setDraft("");
-    send(trimmed).then(refreshConversations); // a new conversation appears in the sidebar
+    send(trimmed, spoken).then(refreshConversations); // a new conversation appears in the sidebar
   }
+
+  // Voice: words appear in the box while speaking; the question is sent when the user stops.
+  const voice = useSpeechInput(setDraft, (text) => ask(text, true));
 
   // A link like /chat?ask=How%20do%20I... starts a new conversation with that question.
   const askFromLink = searchParams.get("ask");
@@ -139,12 +143,25 @@ export default function ChatPage() {
             id="question"
             className="composer-input"
             rows={1}
-            placeholder="Ask a question…"
+            placeholder={voice.listening ? "Listening…" : "Ask a question…"}
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             onKeyDown={handleKeyDown}
             maxLength={2000}
           />
+          {voice.supported && (
+            <button
+              type="button"
+              className={`mic-button${voice.listening ? " mic-listening" : ""}`}
+              onClick={voice.listening ? voice.stop : voice.start}
+              disabled={busy}
+              aria-pressed={voice.listening}
+              aria-label={voice.listening ? "Stop listening" : "Ask by voice"}
+              title={voice.listening ? "Stop listening" : "Ask by voice"}
+            >
+              <MicIcon />
+            </button>
+          )}
           <button
             type="submit"
             className="send-button"
@@ -154,7 +171,11 @@ export default function ChatPage() {
             {busy ? <span className="spinner spinner-light" aria-hidden="true" /> : <SendIcon />}
           </button>
         </form>
-        <p className="composer-hint muted">Enter to send · Shift+Enter for a new line · Answers can take up to a minute</p>
+        <p className="composer-hint muted">
+          {voice.listening
+            ? "🎤 Listening… stop talking to send"
+            : voice.error ?? "Enter to send · Shift+Enter for a new line · 🎤 to ask by voice · Answers can take up to a minute"}
+        </p>
       </section>
 
       <CitationPanel source={openSource} onClose={() => setOpenSource(null)} />

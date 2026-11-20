@@ -156,6 +156,7 @@ export interface ChatMessage {
   messageId: number | null; // database id, known once the answer is saved
   feedback: Rating | null;
   suggestions: string[]; // related questions shown under the answer
+  spoken: boolean; // question asked by voice, so the answer is read aloud
 }
 
 export type TicketStatus = "open" | "in_progress" | "resolved";

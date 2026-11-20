@@ -49,7 +49,12 @@ export default function MessageBubble({ message, question, conversationId, onCit
             <SourceList citations={message.citations} onCite={onCite} />
           )}
           {message.status === "done" && message.messageId !== null && (
-            <FeedbackButtons messageId={message.messageId} initial={message.feedback} />
+            <FeedbackButtons
+              messageId={message.messageId}
+              initial={message.feedback}
+              text={message.content}
+              autoSpeak={message.spoken}
+            />
           )}
           {isLast && message.suggestions.length > 0 && (
             <div className="related">

@@ -2,8 +2,16 @@
 import { useState } from "react";
 import { api } from "../api/client";
 import type { Rating } from "../types";
+import SpeakButton from "./SpeakButton";
 
-export default function FeedbackButtons({ messageId, initial }: { messageId: number; initial: Rating | null }) {
+interface Props {
+  messageId: number;
+  initial: Rating | null;
+  text: string; // the answer, for read-aloud
+  autoSpeak: boolean;
+}
+
+export default function FeedbackButtons({ messageId, initial, text, autoSpeak }: Props) {
   const [rating, setRating] = useState<Rating | null>(initial);
   const [failed, setFailed] = useState(false);
 
@@ -22,6 +30,7 @@ export default function FeedbackButtons({ messageId, initial }: { messageId: num
 
   return (
     <div className="feedback" role="group" aria-label="Rate this answer">
+      <SpeakButton text={text} autoPlay={autoSpeak} />
       <button
         type="button"
         className={`feedback-button${rating === 1 ? " feedback-selected" : ""}`}
