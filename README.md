@@ -243,7 +243,41 @@ Scoring is keyword-based and transparent: an answer counts as correct only if it
 
 ## Screenshots
 
-_TODO: add images to `docs/screenshots/` (upload page, chat with citations, no-answer + ticket, tickets page)._
+**Login with one-click demo accounts**
+
+![Login with one-click demo accounts](docs/screenshots/01-login.png)
+
+**Streaming answer with its source, feedback, read-aloud and related questions**
+
+![Streaming answer with its source, feedback, read-aloud and related questions](docs/screenshots/02-chat-answer.png)
+
+**Clicking a citation opens the document with the exact passage highlighted**
+
+![Clicking a citation opens the document with the exact passage highlighted](docs/screenshots/03-citation.png)
+
+**Not in the documents: the assistant drafts a help-desk ticket to confirm**
+
+![Not in the documents: the assistant drafts a help-desk ticket to confirm](docs/screenshots/04-no-answer-ticket.png)
+
+**Onboarding journey: progress ring, badges, checklist and quiz**
+
+![Onboarding journey: progress ring, badges, checklist and quiz](docs/screenshots/05-onboarding.png)
+
+**Help-desk view: reply, change status, publish the answer to the knowledge base**
+
+![Help-desk view: reply, change status, publish the answer to the knowledge base](docs/screenshots/06-tickets-admin.png)
+
+**Admin: usage, latency, tokens, cost, feedback and the knowledge-gap radar**
+
+![Admin: usage, latency, tokens, cost, feedback and the knowledge-gap radar](docs/screenshots/07-admin-stats.png)
+
+**Documents: upload, status, and who can see each one**
+
+![Documents: upload, status, and who can see each one](docs/screenshots/08-documents.png)
+
+**Users: roles, reporting lines, password reset, deactivate**
+
+![Users: roles, reporting lines, password reset, deactivate](docs/screenshots/09-users.png)
 
 ---
 
