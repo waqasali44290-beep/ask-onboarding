@@ -71,6 +71,7 @@ class Message(Base):
     # The sources the answer actually cited, so history re-renders with working citations.
     citations: Mapped[list[dict]] = mapped_column(JSONB, default=list)
     no_answer: Mapped[bool] = mapped_column(default=False)
+    feedback: Mapped[int | None]  # 1 = thumbs up, -1 = thumbs down
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
 

@@ -39,12 +39,15 @@ export interface Source {
   score: number;
 }
 
+export type Rating = 1 | -1;
+
 export interface StoredMessage {
   id: number;
   role: "user" | "assistant";
   content: string;
   citations: Source[];
   no_answer: boolean;
+  feedback: Rating | null;
   created_at: string;
 }
 
@@ -72,6 +75,8 @@ export interface ChatMessage {
   citations: Source[]; // the ones the answer actually cited
   status: MessageStatus;
   offerTicket: boolean; // only for live no-answer replies, not ones loaded from history
+  messageId: number | null; // database id, known once the answer is saved
+  feedback: Rating | null;
 }
 
 export type TicketStatus = "open" | "in_progress" | "resolved";

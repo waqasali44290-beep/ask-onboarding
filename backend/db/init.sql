@@ -83,3 +83,6 @@ ALTER TABLE tickets ADD CONSTRAINT tickets_status_check CHECK (status IN ('open'
 -- Access control: some documents are for managers (and admins) only.
 ALTER TABLE documents ADD COLUMN IF NOT EXISTS visibility TEXT NOT NULL DEFAULT 'everyone'
     CHECK (visibility IN ('everyone', 'managers'));
+
+-- Feedback: thumbs up (1) or down (-1) on an answer, NULL = not rated.
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS feedback SMALLINT CHECK (feedback IN (-1, 1));

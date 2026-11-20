@@ -62,6 +62,7 @@ class MessageOut(BaseModel):
     content: str
     citations: list[dict]
     no_answer: bool
+    feedback: int | None
     created_at: datetime
 
 
@@ -136,3 +137,7 @@ class UserOut(BaseModel):
 
 class DocumentUpdate(BaseModel):
     visibility: Visibility
+
+
+class FeedbackRequest(BaseModel):
+    rating: Literal[-1, 0, 1]  # 0 removes the rating

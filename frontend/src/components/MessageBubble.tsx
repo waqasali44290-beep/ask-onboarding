@@ -1,6 +1,7 @@
 // One message; turns [1], [2] markers into clickable citation chips.
 import type { ReactNode } from "react";
 import type { ChatMessage, Source } from "../types";
+import FeedbackButtons from "./FeedbackButtons";
 import { ErrorState, LoadingState } from "./States";
 import TicketPrompt from "./TicketPrompt";
 
@@ -44,6 +45,9 @@ export default function MessageBubble({ message, question, conversationId, onCit
           </p>
           {message.status === "done" && message.citations.length > 0 && (
             <SourceList citations={message.citations} onCite={onCite} />
+          )}
+          {message.status === "done" && message.messageId !== null && (
+            <FeedbackButtons messageId={message.messageId} initial={message.feedback} />
           )}
         </div>
       );
