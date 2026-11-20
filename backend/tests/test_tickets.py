@@ -1,7 +1,7 @@
 """Creating a ticket saves title, question and user, and it appears in GET /api/tickets."""
 import json
 
-from app.api import chat
+from app.api import chat, tickets
 from tests.conftest import fake_llm
 
 
@@ -44,3 +44,19 @@ def test_ticket_needs_a_question_and_a_user(client):
     assert client.post("/api/tickets", json={"question": "", "user_name": "Ali"}).status_code == 422
     assert client.post("/api/tickets", json={"question": "Parking?", "user_name": "Ali",
                                              "conversation_id": 999}).status_code == 404
+
+
+def test_draft_suggests_a_title_from_the_llm(client, monkeypatch):
+    monkeypatch.setattr(tickets, "stream_chat", fake_llm('"Request for parking information at the office"\nThanks!'))
+
+    draft = client.post("/api/tickets/draft", json={"question": "where do i park"}).json()
+
+    assert draft == {"title": "Request for parking information at the office"}  # quotes and extra line removed
+
+
+def test_draft_falls_back_to_the_question_when_the_llm_is_down(client, monkeypatch):
+    monkeypatch.setattr(tickets, "stream_chat", fake_llm(error="connection refused"))
+
+    draft = client.post("/api/tickets/draft", json={"question": "Where do I park my car?"}).json()
+
+    assert draft == {"title": "Where do I park my car?"}

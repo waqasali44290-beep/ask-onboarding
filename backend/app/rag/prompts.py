@@ -22,6 +22,10 @@ Rules:
 5. Be brief: 1 to 4 sentences, or a short numbered list for steps."""
 
 
+TICKET_DRAFT_PROMPT = """Rewrite the employee's question as a short, clear help-desk ticket title.
+One sentence, at most 15 words. No quotes, no greeting. Reply with the title only."""
+
+
 def build_user_message(question: str, chunks: list[RetrievedChunk]) -> str:
     sources = "\n\n".join(
         f'<source id="{number}" file="{chunk.filename}">\n{chunk.content}\n</source>'

@@ -90,3 +90,18 @@ class TicketOut(BaseModel):
     conversation_id: int | None
     status: str
     created_at: datetime
+
+
+class ConversationSummary(BaseModel):
+    id: int
+    title: str  # the first question, shortened
+    updated_at: datetime
+    message_count: int
+
+
+class TicketDraftRequest(BaseModel):
+    question: Question
+
+
+class TicketDraft(BaseModel):
+    title: str
