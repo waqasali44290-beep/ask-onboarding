@@ -775,3 +775,12 @@ h1 { background: var(--gradient); -webkit-background-clip: text; background-clip
 @media (prefers-color-scheme: dark) {
   .passage { background: linear-gradient(120deg, #78350f, #831843); }
 }
+
+/* Self-learning knowledge base */
+.button-learn { border: 1px solid var(--accent-5); color: #047857; background: #ecfdf5; }
+.button-learn:hover:not(:disabled) { background: var(--accent-5); color: #fff; border-color: var(--accent-5); }
+.learned { margin: 0; font-size: 0.85rem; font-weight: 500; color: #047857; }
+@media (prefers-color-scheme: dark) {
+  .button-learn { background: #064e3b; color: #6ee7b7; }
+  .learned { color: #6ee7b7; }
+}

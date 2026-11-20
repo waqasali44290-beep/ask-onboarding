@@ -99,6 +99,7 @@ class TicketOut(BaseModel):
     conversation_id: int | None
     status: TicketStatus
     response: str | None
+    document_id: int | None  # set once the reply is in the knowledge base
     created_at: datetime
     updated_at: datetime
     resolved_at: datetime | None

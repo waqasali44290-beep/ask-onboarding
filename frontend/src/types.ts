@@ -142,6 +142,7 @@ export interface Ticket {
   conversation_id: number | null;
   status: TicketStatus;
   response: string | null;
+  document_id: number | null; // reply published to the knowledge base
   created_at: string;
   updated_at: string;
   resolved_at: string | null;

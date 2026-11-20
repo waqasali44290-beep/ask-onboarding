@@ -6,12 +6,14 @@ only admins reply and change the status.
 """
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
-from app.auth import current_user
+from app.auth import current_user, require_role
 from app.db import get_session
+from app.ingestion.pipeline import ingest_document, register_upload
+from app.ingestion.suggestions import suggest_questions
 from app.models import Conversation, Ticket, User
 from app.rag.llm import LLMError, stream_chat
 from app.rag.prompts import TICKET_DRAFT_PROMPT
@@ -93,5 +95,36 @@ def update_ticket(
     if request.status is not None and request.status != ticket.status:
         ticket.status = request.status
         ticket.resolved_at = datetime.now(timezone.utc) if request.status == "resolved" else None
+    session.commit()
+    return ticket
+
+
+@router.post("/{ticket_id}/publish", response_model=TicketOut)
+def publish_answer(
+    ticket_id: int,
+    background_tasks: BackgroundTasks,
+    _: User = Depends(require_role("admin")),
+    session: Session = Depends(get_session),
+):
+    """Turn the help desk's reply into a knowledge-base document, so the next person
+    who asks gets an instant, cited answer instead of opening the same ticket.
+    Publishing again after editing the reply updates the same document."""
+    ticket = session.get(Ticket, ticket_id)
+    if ticket is None:
+        raise HTTPException(404, "Ticket not found.")
+    if not ticket.response:
+        raise HTTPException(400, "Write a reply before adding it to the knowledge base.")
+
+    filename = f"help-desk-answer-{ticket.id}.md"
+    data = (
+        f"# {ticket.title}\n\n"
+        f"Question: {ticket.question}\n\n"
+        f"Answer from the help desk: {ticket.response}\n"
+    ).encode()
+    document, needs_ingestion = register_upload(session, filename, data)
+    if needs_ingestion:
+        background_tasks.add_task(ingest_document, document.id, filename, data)
+        background_tasks.add_task(suggest_questions, document.id)
+    ticket.document_id = document.id
     session.commit()
     return ticket

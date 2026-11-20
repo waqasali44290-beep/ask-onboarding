@@ -130,6 +130,8 @@ def client(session_factory, monkeypatch):
     app.dependency_overrides[chat.get_session_factory] = lambda: session_factory
     monkeypatch.setattr(retrieval, "embed_query", fake_embed_query)
     monkeypatch.setattr(documents, "suggest_questions", lambda document_id: None)  # tests that need it call it directly
+    monkeypatch.setattr(tickets, "ingest_document", partial(ingest_document, session_factory=session_factory, embed=fake_embed))
+    monkeypatch.setattr(tickets, "suggest_questions", lambda document_id: None)
     monkeypatch.setattr(chat, "embed_query", fake_embed_query)
     # Tests that reach the LLM replace this with fake_llm(...).
     monkeypatch.setattr(chat, "stream_chat", fake_llm(error="no fake LLM set for this test"))

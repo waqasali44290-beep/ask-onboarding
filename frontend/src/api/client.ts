@@ -80,6 +80,7 @@ export const api = {
   listTickets: () => request<Ticket[]>("/tickets"),
   draftTicket: (question: string) => request<{ title: string }>("/tickets/draft", json({ question })),
   createTicket: (ticket: NewTicket) => request<Ticket>("/tickets", json(ticket)),
+  publishTicket: (id: number) => request<Ticket>(`/tickets/${id}/publish`, { method: "POST" }),
   updateTicket: (id: number, change: { status?: TicketStatus; response?: string }) =>
     request<Ticket>(`/tickets/${id}`, { ...json(change), method: "PATCH" }),
 };

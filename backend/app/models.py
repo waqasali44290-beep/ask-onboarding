@@ -90,6 +90,7 @@ class Ticket(Base):
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     status: Mapped[str] = mapped_column(Text, default="open")  # open | in_progress | resolved
     response: Mapped[str | None] = mapped_column(Text)  # the help desk reply
+    document_id: Mapped[int | None] = mapped_column(ForeignKey("documents.id", ondelete="SET NULL"))  # published answer
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
     resolved_at: Mapped[datetime | None]

@@ -136,6 +136,18 @@ function TicketCard({ ticket, isAdmin, isOwn, onChange }: CardProps) {
     }
   }
 
+  async function publish() {
+    setSaving(true);
+    setError(null);
+    try {
+      onChange(await api.publishTicket(ticket.id));
+    } catch (err) {
+      setError(messageOf(err));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   const changed = status !== ticket.status || response.trim() !== (ticket.response ?? "");
 
   return (
@@ -190,7 +202,15 @@ function TicketCard({ ticket, isAdmin, isOwn, onChange }: CardProps) {
             >
               {saving ? "Saving…" : "Save"}
             </button>
+            {ticket.response && !changed && (
+              <button type="button" className="button button-learn" disabled={saving} onClick={publish}>
+                {ticket.document_id ? "↻ Update in knowledge base" : "📚 Add answer to knowledge base"}
+              </button>
+            )}
           </div>
+          {ticket.document_id && (
+            <p className="learned">✓ In the knowledge base: the assistant now answers this question by itself.</p>
+          )}
         </div>
       ) : (
         <>
