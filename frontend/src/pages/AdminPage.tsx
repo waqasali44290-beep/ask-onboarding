@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, messageOf } from "../api/client";
 import { EmptyState, ErrorState, LoadingState } from "../components/States";
-import type { AdminStats, AnswerLog } from "../types";
+import type { AdminStats, AnswerLog, Gap } from "../types";
 
 type Filter = "all" | "unhelpful" | "unanswered";
 
@@ -19,11 +19,13 @@ export default function AdminPage() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
+  const [gaps, setGaps] = useState<Gap[] | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
     try {
       setStats(await api.adminStats());
+      api.knowledgeGaps().then(setGaps).catch(() => setGaps([])); // slower: embeds the questions
     } catch (err) {
       setError(messageOf(err));
     }
@@ -76,6 +78,34 @@ export default function AdminPage() {
           detail={`${stats.tickets.resolved ?? 0} resolved`}
         />
       </div>
+
+      <h2>Knowledge gaps</h2>
+      <p className="muted section-intro">
+        What people asked that the documents don't cover, grouped by topic. Write a document for the top ones, or
+        publish a ticket reply.
+      </p>
+      {gaps === null ? (
+        <LoadingState label="Finding gaps…" />
+      ) : gaps.length === 0 ? (
+        <EmptyState title="No gaps found: every question had an answer 🎉" />
+      ) : (
+        <ol className="gaps">
+          {gaps.map((gap, index) => (
+            <li key={gap.topic} className="gap">
+              <span className="gap-rank">{index + 1}</span>
+              <div className="gap-text">
+                <span className="filename">{gap.topic}</span>
+                {gap.examples.length > 1 && (
+                  <p className="muted">Also asked as: {gap.examples.slice(1).map((e) => `“${e}”`).join(", ")}</p>
+                )}
+              </div>
+              <span className="gap-count">
+                {gap.count} {gap.count === 1 ? "ask" : "asks"}
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
 
       <h2>Recent answers</h2>
       <div className="tabs" role="tablist" aria-label="Filter answers">

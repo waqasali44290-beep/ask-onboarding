@@ -77,6 +77,12 @@ export interface AnswerLog {
   feedback: Rating | null;
 }
 
+export interface Gap {
+  topic: string;
+  count: number;
+  examples: string[];
+}
+
 export interface AdminStats {
   answers: number;
   no_answers: number;

@@ -7,12 +7,15 @@ from app.auth import require_role
 from app.config import settings
 from app.db import get_session
 from app.models import Conversation, Message, Ticket, User
-from app.schemas import AdminStats, AnswerLog
+from app.rag.embeddings import embed_passages
+from app.rag.gaps import find_gaps
+from app.schemas import AdminStats, AnswerLog, GapOut
 from app.text import shorten
 
 router = APIRouter(prefix="/api/admin", tags=["admin"], dependencies=[Depends(require_role("admin"))])
 
 RECENT_LIMIT = 50
+GAP_QUESTION_LIMIT = 300  # most recent unanswered questions to group
 
 
 def cost_usd(prompt_tokens: int | None, completion_tokens: int | None) -> float:
@@ -85,3 +88,32 @@ def stats(session: Session = Depends(get_session)):
         tickets=tickets,
         recent=recent,
     )
+
+
+@router.get("/gaps", response_model=list[GapOut])
+def knowledge_gaps(session: Session = Depends(get_session)):
+    """Topics people asked about that the documents don't cover: questions that got
+    the no-answer reply, plus questions still waiting in a ticket."""
+    # For each no-answer reply, the latest question before it in the same conversation
+    # (ids alone can't be trusted to be adjacent: several people chat at once).
+    Question = aliased(Message)
+    question_of = (
+        select(Question.content)
+        .where(Question.conversation_id == Message.conversation_id, Question.role == "user", Question.id < Message.id)
+        .order_by(Question.id.desc())
+        .limit(1)
+        .scalar_subquery()
+    )
+    unanswered = session.scalars(
+        select(question_of)
+        .where(Message.role == "assistant", Message.no_answer)
+        .order_by(Message.id.desc())
+        .limit(GAP_QUESTION_LIMIT)
+    ).all()
+    waiting = session.scalars(select(Ticket.question).where(Ticket.status != "resolved", Ticket.document_id.is_(None))).all()
+
+    gaps = find_gaps(list(unanswered) + list(waiting), embed_passages)
+    return [
+        GapOut(topic=gap.topic, count=len(gap.questions), examples=list(dict.fromkeys(gap.questions))[:3])
+        for gap in gaps[:15]
+    ]

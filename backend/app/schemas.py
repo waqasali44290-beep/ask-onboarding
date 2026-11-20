@@ -201,3 +201,9 @@ class UserUpdate(BaseModel):
     manager_id: int | None = None
     password: Password | None = None
     is_active: bool | None = None
+
+
+class GapOut(BaseModel):
+    topic: str
+    count: int  # how many times it was asked without an answer
+    examples: list[str]  # different wordings people used

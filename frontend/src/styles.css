@@ -784,3 +784,13 @@ h1 { background: var(--gradient); -webkit-background-clip: text; background-clip
   .button-learn { background: #064e3b; color: #6ee7b7; }
   .learned { color: #6ee7b7; }
 }
+
+/* Knowledge gaps */
+.section-intro { margin-top: -0.4rem; font-size: 0.9rem; }
+.gaps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.gap { display: flex; align-items: center; gap: 0.85rem; padding: 0.7rem 1rem; background: var(--surface); border-radius: var(--radius); box-shadow: 0 2px 12px rgb(16 24 40 / 0.06); }
+.gap-text { flex: 1; min-width: 0; }
+.gap-text p { margin: 0.15rem 0 0; font-size: 0.85rem; }
+.gap-rank { display: grid; place-items: center; width: 1.8rem; height: 1.8rem; border-radius: 50%; background: var(--gradient); color: #fff; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; }
+.gap:nth-child(n + 4) .gap-rank { background: var(--surface-2); color: var(--muted); }
+.gap-count { font-weight: 700; color: var(--accent-2); white-space: nowrap; }

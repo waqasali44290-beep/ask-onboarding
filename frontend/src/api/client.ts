@@ -1,5 +1,5 @@
 // All fetch calls to /api in one place. Streaming chat lives in stream.ts.
-import type { AdminStats, Conversation, ConversationSummary, DocumentDetail, DocumentInfo, NewTicket, Ticket, NewUser, Rating, TicketStatus, User, UserAdmin, UserChange, Visibility } from "../types";
+import type { AdminStats, Gap, Conversation, ConversationSummary, DocumentDetail, DocumentInfo, NewTicket, Ticket, NewUser, Rating, TicketStatus, User, UserAdmin, UserChange, Visibility } from "../types";
 
 export class ApiError extends Error {
   constructor(message: string, readonly status: number) {
@@ -57,6 +57,7 @@ export const api = {
   updateUser: (id: number, change: UserChange) =>
     request<UserAdmin>(`/users/${id}`, { ...json(change), method: "PATCH" }),
   adminStats: () => request<AdminStats>("/admin/stats"),
+  knowledgeGaps: () => request<Gap[]>("/admin/gaps"),
   login: (username: string, password: string) => request<User>("/auth/login", json({ username, password })),
   logout: () => request<void>("/auth/logout", { method: "POST" }),
   me: () => request<User>("/auth/me"),
