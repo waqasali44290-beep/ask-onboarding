@@ -54,7 +54,9 @@ class Conversation(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
-    messages: Mapped[list["Message"]] = relationship(order_by="Message.id", passive_deletes=True)
+    messages: Mapped[list["Message"]] = relationship(
+        order_by="Message.id", cascade="all, delete-orphan", passive_deletes=True
+    )
 
 
 class Message(Base):

@@ -71,3 +71,19 @@ def test_unknown_conversation_and_blank_question_are_rejected(client):
     assert client.post("/api/chat", json={"question": "hi", "conversation_id": 999}).status_code == 404
     assert client.post("/api/chat", json={"question": "  "}).status_code == 422
     assert client.get("/api/conversations/999").status_code == 404
+
+
+def test_conversations_are_listed_newest_first_and_can_be_deleted(client, monkeypatch):
+    client.post("/api/documents", files={"file": PTO_POLICY})
+    monkeypatch.setattr(chat, "stream_chat", fake_llm("You get 25 days [1]."))
+    first = post_chat(client, "How many days of paid time off do new employees get?")[-1][1]["conversation_id"]
+    second = post_chat(client, "What is the capital of France?")[-1][1]["conversation_id"]
+
+    listed = client.get("/api/conversations").json()
+    assert [c["id"] for c in listed] == [second, first]
+    assert listed[1]["title"] == "How many days of paid time off do new employees get?"
+    assert listed[1]["message_count"] == 2
+
+    assert client.delete(f"/api/conversations/{first}").status_code == 204
+    assert [c["id"] for c in client.get("/api/conversations").json()] == [second]
+    assert client.delete(f"/api/conversations/{first}").status_code == 404

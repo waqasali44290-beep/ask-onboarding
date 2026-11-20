@@ -4,14 +4,16 @@ from collections.abc import Iterator
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.db import SessionLocal, get_session
-from app.models import Conversation
+from app.models import Conversation, Message
 from app.rag.answerer import ChatEvent, answer_question
 from app.rag.embeddings import embed_query
 from app.rag.llm import stream_chat
-from app.schemas import ChatRequest, ConversationOut
+from app.schemas import ChatRequest, ConversationOut, ConversationSummary
+from app.text import shorten
 
 router = APIRouter(prefix="/api", tags=["chat"])
 
@@ -36,6 +38,40 @@ def chat(request: ChatRequest, session_factory: sessionmaker = Depends(get_sessi
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache"},
     )
+
+
+@router.get("/conversations", response_model=list[ConversationSummary])
+def list_conversations(session: Session = Depends(get_session)):
+    """Most recent first, titled by their first question (for the sidebar)."""
+    stats = (
+        select(
+            Message.conversation_id,
+            func.min(Message.id).label("first_message_id"),
+            func.max(Message.created_at).label("updated_at"),
+            func.count().label("message_count"),
+        )
+        .group_by(Message.conversation_id)
+        .subquery()
+    )
+    rows = session.execute(
+        select(stats.c.conversation_id, Message.content, stats.c.updated_at, stats.c.message_count)
+        .join(Message, Message.id == stats.c.first_message_id)
+        .order_by(stats.c.updated_at.desc())
+        .limit(50)
+    )
+    return [
+        ConversationSummary(id=id, title=shorten(first_question, 60), updated_at=updated_at, message_count=count)
+        for id, first_question, updated_at, count in rows
+    ]
+
+
+@router.delete("/conversations/{conversation_id}", status_code=204)
+def delete_conversation(conversation_id: int, session: Session = Depends(get_session)):
+    conversation = session.get(Conversation, conversation_id)
+    if conversation is None:
+        raise HTTPException(404, "Conversation not found.")
+    session.delete(conversation)  # messages go with it; tickets keep their copy of the question
+    session.commit()
 
 
 @router.get("/conversations/{conversation_id}", response_model=ConversationOut)
