@@ -1,5 +1,6 @@
 """System prompt and context formatting: answer only from sources, cite [n], say plainly when unknown."""
 from app.rag.retriever import RetrievedChunk
+from app.text import shorten
 
 # The model replies with exactly this when the sources don't answer the question.
 # A fixed marker is easy to detect reliably, unlike free-text "I don't know" phrasings.
@@ -26,10 +27,22 @@ TICKET_DRAFT_PROMPT = """Rewrite the employee's question as a short, clear help-
 One sentence, at most 15 words. No quotes, no greeting. Reply with the title only."""
 
 
-def build_user_message(question: str, chunks: list[RetrievedChunk]) -> str:
+def build_user_message(
+    question: str, chunks: list[RetrievedChunk], previous: tuple[str, str] | None = None
+) -> str:
     sources = "\n\n".join(
         f'<source id="{number}" file="{chunk.filename}">\n{chunk.content}\n</source>'
         for number, chunk in enumerate(chunks, start=1)
     )
+    # For a follow-up, the last exchange tells the model what "it" or "them" means.
+    # The rule travels with the block, so single questions get exactly the same prompt as before.
+    earlier = ""
+    if previous:
+        asked, answered = previous
+        earlier = (
+            "<earlier_conversation note=\"only to understand what the question refers to; "
+            "facts must still come from the sources\">\n"
+            f"Employee: {asked}\nAssistant: {shorten(answered, 600)}\n</earlier_conversation>\n\n"
+        )
     # Sources go inside tags so the model can tell document text apart from the question.
-    return f"<sources>\n{sources}\n</sources>\n\nQuestion: {question}"
+    return f"<sources>\n{sources}\n</sources>\n\n{earlier}Question: {question}"
