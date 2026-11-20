@@ -1,11 +1,14 @@
 // All fetch calls to /api in one place. Streaming chat lives in stream.ts.
-import type { Conversation, ConversationSummary, DocumentDetail, DocumentInfo, NewTicket, Ticket } from "../types";
+import type { Conversation, ConversationSummary, DocumentDetail, DocumentInfo, NewTicket, Ticket, User } from "../types";
 
 export class ApiError extends Error {
   constructor(message: string, readonly status: number) {
     super(message);
   }
 }
+
+/** Fired on window when the API answers 401, so the app can show the login page. */
+export const AUTH_EXPIRED_EVENT = "auth-expired";
 
 export const SERVER_UNREACHABLE = "Can't reach the server. Check that the app is running (docker compose up).";
 
@@ -15,6 +18,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     response = await fetch(`/api${path}`, init);
   } catch {
     throw new ApiError(SERVER_UNREACHABLE, 0); // network error, not an HTTP status
+  }
+  if (response.status === 401 && !path.startsWith("/auth/")) {
+    window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
   }
   if (!response.ok) {
     throw new ApiError(await errorMessage(response), response.status);
@@ -46,6 +52,9 @@ const json = (body: unknown): RequestInit => ({
 });
 
 export const api = {
+  login: (username: string, password: string) => request<User>("/auth/login", json({ username, password })),
+  logout: () => request<void>("/auth/logout", { method: "POST" }),
+  me: () => request<User>("/auth/me"),
   listDocuments: () => request<DocumentInfo[]>("/documents"),
   getDocument: (id: number) => request<DocumentDetail>(`/documents/${id}`),
   uploadDocument: (file: File) => {

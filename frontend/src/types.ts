@@ -1,5 +1,12 @@
 // Shared TypeScript types matching the backend schemas (backend/app/schemas.py).
 
+export interface User {
+  id: number;
+  username: string;
+  display_name: string;
+  role: "employee" | "manager" | "admin";
+}
+
 export type DocumentStatus = "processing" | "ready" | "failed";
 
 export interface DocumentInfo {

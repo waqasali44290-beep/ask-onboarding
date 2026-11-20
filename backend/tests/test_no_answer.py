@@ -7,7 +7,7 @@ PTO_POLICY = b"New employees get 25 days of paid time off per year."
 
 
 def ask(session_factory, question: str, llm) -> list:
-    return list(answer_question(session_factory, question, None, embed=fake_embed_query, llm=llm))
+    return list(answer_question(session_factory, question, None, None, embed=fake_embed_query, llm=llm))
 
 
 def test_unrelated_question_is_answered_without_calling_the_llm(session_factory):

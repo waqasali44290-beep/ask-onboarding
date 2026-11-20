@@ -27,6 +27,7 @@ def answer_question(
     session_factory: sessionmaker,
     question: str,
     conversation_id: int | None,
+    user_id: int,
     embed: QueryEmbedder,
     llm: StreamChat,
 ) -> Iterator[ChatEvent]:
@@ -37,7 +38,7 @@ def answer_question(
     """
     with session_factory() as session:
         if conversation_id is None:
-            conversation = Conversation()
+            conversation = Conversation(user_id=user_id)
             session.add(conversation)
             session.flush()  # assigns conversation.id
             conversation_id = conversation.id

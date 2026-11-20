@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.auth import current_user
 from app.db import get_session
 from app.models import Conversation, Ticket
 from app.rag.llm import LLMError, stream_chat
@@ -10,7 +11,7 @@ from app.rag.prompts import TICKET_DRAFT_PROMPT
 from app.schemas import TicketCreate, TicketDraft, TicketDraftRequest, TicketOut
 from app.text import shorten
 
-router = APIRouter(prefix="/api/tickets", tags=["tickets"])
+router = APIRouter(prefix="/api/tickets", tags=["tickets"], dependencies=[Depends(current_user)])
 
 TITLE_LENGTH = 80
 

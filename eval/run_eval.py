@@ -11,6 +11,7 @@ Scoring is deliberately simple and transparent:
 - no-answer correct: questions with source=null get the no-answer reply
 """
 import argparse
+import http.cookiejar
 import json
 import time
 import urllib.request
@@ -18,11 +19,14 @@ from pathlib import Path
 
 HERE = Path(__file__).parent
 
+# Keeps the session cookie from /api/auth/login for every later request.
+opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+
 
 def post(api: str, path: str, body: dict) -> urllib.request.addinfourl:
     request = urllib.request.Request(f"{api}{path}", data=json.dumps(body).encode(),
                                      headers={"Content-Type": "application/json"})
-    return urllib.request.urlopen(request, timeout=600)
+    return opener.open(request, timeout=600)
 
 
 def retrieve(api: str, question: str, top_k: int) -> list[dict]:
@@ -72,9 +76,12 @@ def main():
     parser.add_argument("--api", default="http://localhost:8000")
     parser.add_argument("--label", default="run", help="name for the results file")
     parser.add_argument("--top-k", type=int, default=5)
+    parser.add_argument("--user", default="admin", help="admins and managers can see every document")
+    parser.add_argument("--password", default="onboarding")
     parser.add_argument("--retrieval-only", action="store_true", help="skip the (slow) LLM answers")
     args = parser.parse_args()
 
+    post(args.api, "/api/auth/login", {"username": args.user, "password": args.password}).close()
     cases = [json.loads(line) for line in (HERE / "questions.jsonl").read_text().splitlines() if line.strip()]
     rows = []
     for case in cases:

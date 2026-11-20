@@ -5,6 +5,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.auth import current_user, require_role
 from app.config import settings
 from app.db import get_session
 from app.ingestion.parsers import ParseError
@@ -12,12 +13,14 @@ from app.ingestion.pipeline import ingest_document, register_upload
 from app.models import Chunk, Document
 from app.schemas import DocumentDetail, DocumentOut
 
-router = APIRouter(prefix="/api/documents", tags=["documents"])
+# Reading needs a login; uploading and deleting are admin-only (per route below).
+router = APIRouter(prefix="/api/documents", tags=["documents"], dependencies=[Depends(current_user)])
+admin_only = [Depends(require_role("admin"))]
 
 
 # Plain `def` (not async): FastAPI runs it in a thread pool, so the blocking
 # database calls don't freeze other requests.
-@router.post("", response_model=DocumentOut, status_code=202)
+@router.post("", response_model=DocumentOut, status_code=202, dependencies=admin_only)
 def upload_document(
     file: UploadFile,
     background_tasks: BackgroundTasks,
@@ -64,7 +67,7 @@ def get_document(document_id: int, session: Session = Depends(get_session)):
     return _with_chunk_count(session, _get_or_404(session, document_id), DocumentDetail)
 
 
-@router.delete("/{document_id}", status_code=204)
+@router.delete("/{document_id}", status_code=204, dependencies=admin_only)
 def delete_document(document_id: int, session: Session = Depends(get_session)):
     session.delete(_get_or_404(session, document_id))
     session.commit()

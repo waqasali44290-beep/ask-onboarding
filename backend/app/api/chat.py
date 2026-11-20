@@ -7,8 +7,9 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.auth import current_user
 from app.db import SessionLocal, get_session
-from app.models import Conversation, Message
+from app.models import Conversation, Message, User
 from app.rag.answerer import ChatEvent, answer_question
 from app.rag.embeddings import embed_query
 from app.rag.llm import stream_chat
@@ -25,13 +26,16 @@ def get_session_factory() -> sessionmaker:
 
 
 @router.post("/chat")
-def chat(request: ChatRequest, session_factory: sessionmaker = Depends(get_session_factory)):
+def chat(
+    request: ChatRequest,
+    user: User = Depends(current_user),
+    session_factory: sessionmaker = Depends(get_session_factory),
+):
     if request.conversation_id is not None:
         with session_factory() as session:
-            if session.get(Conversation, request.conversation_id) is None:
-                raise HTTPException(404, "Conversation not found.")
+            _own_conversation_or_404(session, request.conversation_id, user)
 
-    events = answer_question(session_factory, request.question, request.conversation_id,
+    events = answer_question(session_factory, request.question, request.conversation_id, user.id,
                              embed=embed_query, llm=stream_chat)
     return StreamingResponse(
         _server_sent_events(events),
@@ -41,7 +45,7 @@ def chat(request: ChatRequest, session_factory: sessionmaker = Depends(get_sessi
 
 
 @router.get("/conversations", response_model=list[ConversationSummary])
-def list_conversations(session: Session = Depends(get_session)):
+def list_conversations(user: User = Depends(current_user), session: Session = Depends(get_session)):
     """Most recent first, titled by their first question (for the sidebar)."""
     stats = (
         select(
@@ -56,6 +60,8 @@ def list_conversations(session: Session = Depends(get_session)):
     rows = session.execute(
         select(stats.c.conversation_id, Message.content, stats.c.updated_at, stats.c.message_count)
         .join(Message, Message.id == stats.c.first_message_id)
+        .join(Conversation, Conversation.id == stats.c.conversation_id)
+        .where(Conversation.user_id == user.id)
         .order_by(stats.c.updated_at.desc())
         .limit(50)
     )
@@ -66,18 +72,25 @@ def list_conversations(session: Session = Depends(get_session)):
 
 
 @router.delete("/conversations/{conversation_id}", status_code=204)
-def delete_conversation(conversation_id: int, session: Session = Depends(get_session)):
-    conversation = session.get(Conversation, conversation_id)
-    if conversation is None:
-        raise HTTPException(404, "Conversation not found.")
-    session.delete(conversation)  # messages go with it; tickets keep their copy of the question
+def delete_conversation(
+    conversation_id: int, user: User = Depends(current_user), session: Session = Depends(get_session)
+):
+    session.delete(_own_conversation_or_404(session, conversation_id, user))  # messages go with it; tickets keep their copy of the question
     session.commit()
 
 
 @router.get("/conversations/{conversation_id}", response_model=ConversationOut)
-def get_conversation(conversation_id: int, session: Session = Depends(get_session)):
+def get_conversation(
+    conversation_id: int, user: User = Depends(current_user), session: Session = Depends(get_session)
+):
+    return _own_conversation_or_404(session, conversation_id, user)
+
+
+def _own_conversation_or_404(session: Session, conversation_id: int, user: User) -> Conversation:
+    """Someone else's conversation looks exactly like a missing one (404, not 403),
+    so ids can't be used to discover other people's chats."""
     conversation = session.get(Conversation, conversation_id)
-    if conversation is None:
+    if conversation is None or conversation.user_id != user.id:
         raise HTTPException(404, "Conversation not found.")
     return conversation
 

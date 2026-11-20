@@ -21,5 +21,8 @@ class Settings(BaseSettings):
     max_upload_mb: int = 20
     cors_origins: str = "http://localhost:5173"
 
+    demo_password: str = "onboarding"  # password of the demo accounts created on first start
+    session_days: int = 7
+
 
 settings = Settings()

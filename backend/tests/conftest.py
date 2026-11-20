@@ -11,12 +11,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker
 
-from app.api import chat, documents, retrieval
+from app.api import chat, documents, retrieval, tickets
+from app.auth import hash_password
 from app.config import settings
 from app.db import get_session
 from app.ingestion.pipeline import ingest_document, register_upload
 from app.main import app
-from app.models import Document
+from app.models import Document, User
 from app.rag.llm import LLMError
 
 TEST_DATABASE = "ask_onboarding_test"
@@ -47,7 +48,7 @@ def session_factory(engine):
     yield sessionmaker(bind=engine, expire_on_commit=False)
     with engine.begin() as connection:
         connection.exec_driver_sql(
-            "TRUNCATE documents, chunks, conversations, messages, tickets RESTART IDENTITY CASCADE"
+            "TRUNCATE documents, chunks, conversations, messages, tickets, users, user_sessions RESTART IDENTITY CASCADE"
         )
 
 
@@ -88,6 +89,15 @@ def fake_llm(*pieces: str, error: str | None = None) -> FakeLLM:
     return FakeLLM(list(pieces), error)
 
 
+TEST_PASSWORD = "test-password"
+
+
+def login(client: TestClient, username: str) -> None:
+    """Log the test client in as one of the users created by the client fixture."""
+    response = client.post("/api/auth/login", json={"username": username, "password": TEST_PASSWORD})
+    assert response.status_code == 200, response.text
+
+
 def fake_embed_query(text: str) -> list[float]:
     return fake_embed([text])[0]
 
@@ -120,5 +130,13 @@ def client(session_factory, monkeypatch):
     monkeypatch.setattr(chat, "embed_query", fake_embed_query)
     # Tests that reach the LLM replace this with fake_llm(...).
     monkeypatch.setattr(chat, "stream_chat", fake_llm(error="no fake LLM set for this test"))
-    yield TestClient(app)
+    monkeypatch.setattr(tickets, "stream_chat", fake_llm(error="no fake LLM set for this test"))
+    with session_factory() as session:
+        for role in ("employee", "manager", "admin"):
+            session.add(User(username=role, display_name=f"Test {role}", role=role,
+                             password_hash=hash_password(TEST_PASSWORD)))
+        session.commit()
+    test_client = TestClient(app)
+    login(test_client, "admin")
+    yield test_client
     app.dependency_overrides.clear()

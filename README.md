@@ -134,6 +134,16 @@ docker compose up --build
 
 The first start downloads the LLM (`qwen2.5:3b`, about 1.9 GB) and the embedding model (about 130 MB). Both are cached in Docker volumes, so later starts are fast.
 
+### Demo accounts
+
+| Username | Password | Can do |
+|---|---|---|
+| `employee` | `onboarding` | Chat, open tickets, see own tickets |
+| `manager` | `onboarding` | Same as employee |
+| `admin` | `onboarding` | Everything, plus manage documents and all tickets |
+
+They are created on first start. Set `DEMO_PASSWORD` in `.env` to change the password.
+
 ### Load the sample documents
 
 ```bash

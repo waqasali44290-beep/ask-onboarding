@@ -4,13 +4,14 @@ from dataclasses import asdict
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from app.auth import current_user
 from app.config import settings
 from app.db import get_session
 from app.rag.embeddings import embed_query
 from app.rag.retriever import search
 from app.schemas import RetrievedChunkOut, RetrieveRequest, RetrieveResponse
 
-router = APIRouter(prefix="/api", tags=["retrieval"])
+router = APIRouter(prefix="/api", tags=["retrieval"], dependencies=[Depends(current_user)])
 
 
 @router.post("/retrieve", response_model=RetrieveResponse)

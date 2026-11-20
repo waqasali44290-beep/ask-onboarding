@@ -2,6 +2,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { api, messageOf } from "../api/client";
+import { useUser } from "../auth";
 import type { Ticket } from "../types";
 import { SparkleIcon } from "./Icons";
 
@@ -22,8 +23,9 @@ interface Props {
 
 export default function TicketPrompt({ question, conversationId }: Props) {
   const [title, setTitle] = useState<string | null>(null); // null = still drafting
-  const [name, setName] = useState(readName);
-  const [editingName, setEditingName] = useState(() => !readName()); // ask only the first time
+  const user = useUser();
+  const [name, setName] = useState(() => readName() || user.display_name);
+  const [editingName, setEditingName] = useState(false);
   const [state, setState] = useState<"ready" | "saving" | "declined">("ready");
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [error, setError] = useState<string | null>(null);

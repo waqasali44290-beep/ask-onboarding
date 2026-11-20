@@ -105,3 +105,17 @@ class TicketDraftRequest(BaseModel):
 
 class TicketDraft(BaseModel):
     title: str
+
+
+class LoginRequest(BaseModel):
+    username: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
+    password: Annotated[str, StringConstraints(min_length=1, max_length=200)]
+
+
+class UserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    username: str
+    display_name: str
+    role: str

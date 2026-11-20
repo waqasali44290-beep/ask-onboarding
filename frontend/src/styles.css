@@ -117,6 +117,31 @@ h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; }
 .nav a:hover { background: var(--surface-2); color: var(--text); text-decoration: none; }
 .nav a.active { background: var(--accent-soft); color: var(--accent); }
 
+.user-chip { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; margin-left: 0.75rem; }
+.user-name { font-size: 0.85rem; font-weight: 600; }
+.user-role { font-size: 0.72rem; color: var(--muted); }
+
+.login { min-height: 100vh; display: grid; place-items: center; padding: 1rem; }
+.login-card {
+  width: min(24rem, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+}
+.login-card h1 { font-size: 1.3rem; margin-top: 0.75rem; }
+.login-card p { margin: 0 0 0.5rem; }
+.login-card label { font-size: 0.85rem; font-weight: 600; margin-top: 0.4rem; }
+.login-card .button-primary { margin-top: 0.75rem; }
+.brand-mark-large { width: 2.75rem; height: 2.75rem; font-size: 1.3rem; border-radius: 12px; }
+.demo-accounts { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+.demo-accounts p { font-size: 0.82rem; }
+.demo-buttons { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
 main { max-width: 1180px; margin: 0 auto; padding: 1.5rem 1.25rem; }
 
 .page { max-width: 900px; margin: 0 auto; }
