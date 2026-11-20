@@ -75,7 +75,15 @@ export interface Ticket {
   created_at: string;
 }
 
+export interface ConversationSummary {
+  id: number;
+  title: string;
+  updated_at: string;
+  message_count: number;
+}
+
 export interface NewTicket {
+  title: string;
   question: string;
   user_name: string;
   conversation_id: number | null;

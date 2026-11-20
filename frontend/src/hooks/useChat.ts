@@ -1,7 +1,7 @@
 // Chat state: messages, streaming status and the current conversation.
 // The conversation id is kept in localStorage so the history survives a page reload.
-import { useEffect, useState } from "react";
-import { api } from "../api/client";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { api, ApiError } from "../api/client";
 import { streamChat } from "../api/stream";
 import type { ChatMessage, StoredMessage } from "../types";
 
@@ -45,27 +45,37 @@ export function useChat() {
   const [conversationId, setConversationId] = useState<number | null>(readStoredId);
   const [history, setHistory] = useState<"loading" | "ready" | "error">(conversationId ? "loading" : "ready");
 
-  // Load the saved conversation once, when the page opens.
+  const requestedId = useRef<number | null>(null); // ignore a slow load if the user already switched again
+
+  const openConversation = useCallback(async (id: number) => {
+    requestedId.current = id;
+    setConversationId(id);
+    storeId(id);
+    setMessages([]);
+    setHistory("loading");
+    try {
+      const conversation = await api.getConversation(id);
+      if (requestedId.current !== id) return;
+      setMessages(conversation.messages.map(fromStored));
+      setHistory("ready");
+    } catch (err) {
+      if (requestedId.current !== id) return;
+      if (err instanceof ApiError && err.status === 404) {
+        // conversation was deleted (e.g. database reset): start a new one
+        storeId(null);
+        setConversationId(null);
+        setHistory("ready");
+      } else {
+        setHistory("error");
+      }
+    }
+  }, []);
+
+  // Reopen the last conversation when the page loads.
   useEffect(() => {
     const id = readStoredId();
-    if (id === null) return;
-    api
-      .getConversation(id)
-      .then((conversation) => {
-        setMessages(conversation.messages.map(fromStored));
-        setHistory("ready");
-      })
-      .catch((err) => {
-        if (err.status === 404) {
-          // conversation was deleted (e.g. database reset): start a new one
-          storeId(null);
-          setConversationId(null);
-          setHistory("ready");
-        } else {
-          setHistory("error");
-        }
-      });
-  }, []);
+    if (id !== null) openConversation(id);
+  }, [openConversation]);
 
   const busy = messages.some((m) => ["searching", "thinking", "streaming"].includes(m.status));
 
@@ -95,10 +105,12 @@ export function useChat() {
   }
 
   function startNewConversation() {
+    requestedId.current = null;
+    setHistory("ready");
     setMessages([]);
     setConversationId(null);
     storeId(null);
   }
 
-  return { messages, send, busy, history, conversationId, startNewConversation };
+  return { messages, send, busy, history, conversationId, openConversation, startNewConversation };
 }
